@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Activity, Brain, LayoutDashboard, MapPin, Route } from 'lucide-react'
 import clsx from 'clsx'
+import { api } from '../api'
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -10,6 +12,14 @@ const nav = [
 ]
 
 export default function Layout() {
+  const [backendOk, setBackendOk] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    api.health()
+      .then(() => setBackendOk(true))
+      .catch(() => setBackendOk(false))
+  }, [])
+
   return (
     <div className="flex min-h-screen">
       <aside className="relative flex w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900/80 backdrop-blur">
@@ -45,6 +55,12 @@ export default function Layout() {
           ))}
         </nav>
         <div className="border-t border-slate-800 p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <span className={`h-2 w-2 rounded-full ${backendOk === null ? 'bg-yellow-500' : backendOk ? 'bg-green-500' : 'bg-red-500'}`} />
+            <span className="text-xs text-slate-500">
+              {backendOk === null ? 'Checking API...' : backendOk ? 'API connected' : 'API offline — start backend'}
+            </span>
+          </div>
           <p className="text-xs text-slate-500">Flipkart Grid Hackathon</p>
           <p className="text-xs text-slate-600">Event-Driven Congestion PS</p>
         </div>

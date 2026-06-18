@@ -9,9 +9,17 @@ from ..data_processor import engineer_features, load_raw_data
 
 
 def _safe_float(val, default=0.0) -> float:
-    if val is None or (isinstance(val, float) and (math.isnan(val) or math.isinf(val))):
+    try:
+        f = float(val)
+        if math.isnan(f) or math.isinf(f):
+            return default
+        return f
+    except (TypeError, ValueError):
         return default
-    return float(val)
+
+
+def _safe_round(val, digits: int = 2, default: float = 0.0) -> float:
+    return round(_safe_float(val, default), digits)
 
 
 class AnalyticsService:
@@ -36,9 +44,9 @@ class AnalyticsService:
             "planned_events": len(planned),
             "unplanned_events": len(unplanned),
             "road_closures": int(df["requires_closure_int"].sum()),
-            "avg_congestion_score": round(float(df["congestion_score"].mean()), 2),
-            "avg_duration_hours": round(float(df["duration_hours"].median()), 2),
-            "high_priority_pct": round(float((df["priority"] == "High").mean()) * 100, 1),
+            "avg_congestion_score": _safe_round(df["congestion_score"].mean()),
+            "avg_duration_hours": _safe_round(df["duration_hours"].median()),
+            "high_priority_pct": _safe_round((df["priority"] == "High").mean() * 100, 1),
             "date_range": {
                 "start": str(df["start_dt"].min()),
                 "end": str(df["start_dt"].max()),
@@ -61,9 +69,9 @@ class AnalyticsService:
             {
                 "cause": row["event_cause"],
                 "count": int(row["count"]),
-                "avg_score": round(float(row["avg_score"]), 2),
-                "avg_duration_hours": round(float(row["avg_duration"]), 2),
-                "closure_rate": round(float(row["closure_rate"]), 3),
+                "avg_score": _safe_round(row["avg_score"]),
+                "avg_duration_hours": _safe_round(row["avg_duration"]),
+                "closure_rate": _safe_round(row["closure_rate"], 3),
             }
             for _, row in grouped.iterrows()
         ]
@@ -84,8 +92,8 @@ class AnalyticsService:
             {
                 "corridor": row["corridor"],
                 "count": int(row["count"]),
-                "avg_score": round(float(row["avg_score"]), 2),
-                "closure_rate": round(float(row["closure_rate"]), 3),
+                "avg_score": _safe_round(row["avg_score"]),
+                "closure_rate": _safe_round(row["closure_rate"], 3),
             }
             for _, row in grouped.iterrows()
         ]
@@ -102,7 +110,7 @@ class AnalyticsService:
             {
                 "zone": row["zone"],
                 "count": int(row["count"]),
-                "avg_score": round(float(row["avg_score"]), 2),
+                "avg_score": _safe_round(row["avg_score"]),
             }
             for _, row in grouped.iterrows()
         ]
@@ -115,7 +123,7 @@ class AnalyticsService:
             .sort_values("hour")
         )
         return [
-            {"hour": int(row["hour"]), "count": int(row["count"]), "avg_score": round(float(row["avg_score"]), 2)}
+            {"hour": int(row["hour"]), "count": int(row["count"]), "avg_score": _safe_round(row["avg_score"])}
             for _, row in grouped.iterrows()
         ]
 
@@ -153,8 +161,8 @@ class AnalyticsService:
                 "event_cause": row["event_cause"],
                 "description": row["description"] if pd.notna(row["description"]) else "",
                 "corridor": row["corridor"],
-                "lat": float(row["latitude"]),
-                "lng": float(row["longitude"]),
+                "lat": _safe_float(row["latitude"]),
+                "lng": _safe_float(row["longitude"]),
                 "start_datetime": str(row["start_dt"]),
                 "duration_hours": round(_safe_float(row["duration_hours"], 1.0), 2),
                 "congestion_score": _safe_float(row["congestion_score"], 4.0),

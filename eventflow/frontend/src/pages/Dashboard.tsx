@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [corridors, setCorridors] = useState<CorridorStat[]>([])
   const [hourly, setHourly] = useState<HourlyStat[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     Promise.all([api.summary(), api.causes(), api.corridors(), api.hourly()])
@@ -44,11 +45,31 @@ export default function Dashboard() {
         setCorridors(cor.slice(0, 8))
         setHourly(h)
       })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
+      })
       .finally(() => setLoading(false))
   }, [])
 
   if (loading) {
     return <div className="flex h-full items-center justify-center text-slate-400">Loading analytics...</div>
+  }
+
+  if (error || !summary) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center">
+        <AlertTriangle className="h-12 w-12 text-orange-400" />
+        <h2 className="text-xl font-bold text-white">Backend Not Connected</h2>
+        <p className="max-w-md text-sm text-slate-400">
+          The dashboard needs the Python API running on port 8000. Start it with:
+        </p>
+        <code className="rounded-lg bg-slate-800 px-4 py-2 text-sm text-green-400">
+          cd eventflow/backend && uvicorn app.main:app --reload --port 8000
+        </code>
+        <p className="text-xs text-slate-500">Or double-click <strong>start.bat</strong> to launch both servers.</p>
+        {error && <p className="text-xs text-red-400">{error}</p>}
+      </div>
+    )
   }
 
   return (
