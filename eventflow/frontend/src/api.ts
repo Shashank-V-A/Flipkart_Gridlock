@@ -1,5 +1,6 @@
 import type {
   CauseStat,
+  ChatResponse,
   CorridorStat,
   ForecastRequest,
   ForecastResult,
@@ -25,7 +26,7 @@ async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  health: () => fetchJson<{ status: string; models_loaded: boolean }>('/health'),
+  health: () => fetchJson<{ status: string; models_loaded: boolean; llm_available?: boolean }>('/health'),
   metadata: () => fetchJson<Metadata>('/metadata'),
   summary: () => fetchJson<Summary>('/analytics/summary'),
   causes: () => fetchJson<CauseStat[]>('/analytics/causes'),
@@ -39,4 +40,10 @@ export const api = {
   feedback: (body: Record<string, unknown>) =>
     fetchJson<Record<string, unknown>>('/feedback', { method: 'POST', body: JSON.stringify(body) }),
   learning: () => fetchJson<Record<string, unknown>>('/learning'),
+  chat: (message: string, history: { role: string; content: string }[] = []) =>
+    fetchJson<ChatResponse>('/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, history }),
+    }),
+  chatSuggestions: () => fetchJson<{ suggestions: string[] }>('/chat/suggestions'),
 }

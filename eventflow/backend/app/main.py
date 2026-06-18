@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .schemas import FeedbackRequest, ForecastRequest
+from .schemas import ChatRequest, FeedbackRequest, ForecastRequest
 from .services.analytics import AnalyticsService
+from .services.chat_agent import ChatAgent
 from .services.predictor import PredictorService
 
 app = FastAPI(
@@ -21,13 +22,16 @@ app.add_middleware(
 
 predictor = PredictorService()
 analytics = AnalyticsService()
+chat_agent = ChatAgent(predictor, analytics)
 
 
 @app.get("/api/health")
 def health():
+    from .services.llm_service import is_llm_available
     return {
         "status": "ok",
         "models_loaded": predictor.is_ready(),
+        "llm_available": is_llm_available(),
     }
 
 
@@ -81,6 +85,20 @@ def forecast(request: ForecastRequest):
 @app.post("/api/feedback")
 def feedback(request: FeedbackRequest):
     return analytics.add_feedback(request.model_dump())
+
+
+@app.post("/api/chat")
+def chat(request: ChatRequest):
+    result = chat_agent.handle(
+        request.message,
+        [m.model_dump() for m in request.history],
+    )
+    return result
+
+
+@app.get("/api/chat/suggestions")
+def chat_suggestions():
+    return {"suggestions": chat_agent.get_suggestions()}
 
 
 @app.get("/api/learning")

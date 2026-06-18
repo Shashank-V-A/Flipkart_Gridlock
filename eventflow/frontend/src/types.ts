@@ -120,3 +120,27 @@ export interface Metadata {
   duration_mae_hours?: number
   closure_accuracy?: number
 }
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  steps?: AgentStep[]
+  forecast?: ForecastResult | null
+}
+
+export interface AgentStep {
+  agent: string
+  action: string
+  detail?: Record<string, unknown>
+}
+
+export interface ChatResponse {
+  reply: string
+  intent: string
+  steps: AgentStep[]
+  parsed: Record<string, unknown> | null
+  forecast: ForecastResult | null
+  suggestions: string[]
+  llm_enhanced?: boolean
+  llm_available?: boolean
+}

@@ -56,7 +56,33 @@ Open **http://localhost:5173**
 
 ## Pages
 
-1. **Dashboard** — Analytics, cause breakdown, corridor risk table
-2. **Live Map** — Filterable event heatmap across Bengaluru
-3. **Event Planner** — Input event details → get AI forecast + deployment plan
-4. **Post-Event Learning** — Feedback loop for continuous improvement
+1. **AI Agent** — Chat in plain English → autonomous forecast + deployment plan
+2. **Dashboard** — Analytics, cause breakdown, corridor risk table
+3. **Live Map** — Filterable event heatmap across Bengaluru
+4. **Event Planner** — Input event details → get AI forecast + deployment plan
+5. **Post-Event Learning** — Feedback loop for continuous improvement
+
+## AI Agent
+
+Open **AI Agent** in the sidebar and type naturally:
+
+```
+Cricket match at Chinnaswamy Stadium Saturday evening
+Political rally on Mysore Road Sunday morning
+What are the highest risk corridors?
+```
+
+The agent runs: **Sense** (parse message) → **Forecast** (ML models) → **Plan** (recommendations) → **Explain** (OpenRouter LLM, optional)
+
+### Enable richer LLM explanations (OpenRouter)
+
+1. Get a free API key at [openrouter.ai/keys](https://openrouter.ai/keys)
+2. Copy `backend/.env.example` to `backend/.env`
+3. Set your key:
+   ```
+   OPENROUTER_API_KEY=sk-or-v1-your-key-here
+   OPENROUTER_MODEL=qwen/qwen-2.5-7b-instruct
+   ```
+4. Restart the backend — the AI Agent page will show **LLM Enhanced**
+
+Without a key, the agent still works using template-based replies.

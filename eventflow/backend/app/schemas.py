@@ -22,3 +22,22 @@ class FeedbackRequest(BaseModel):
     predicted_duration_hours: float
     actual_duration_hours: float
     notes: str | None = None
+
+
+class ChatMessage(BaseModel):
+    role: str = Field(..., examples=["user", "assistant"])
+    content: str
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=1000)
+    history: list[ChatMessage] = Field(default_factory=list)
+
+
+class ChatResponse(BaseModel):
+    reply: str
+    intent: str
+    steps: list[dict] = Field(default_factory=list)
+    parsed: dict | None = None
+    forecast: dict | None = None
+    suggestions: list[str] = Field(default_factory=list)

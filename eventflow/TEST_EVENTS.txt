@@ -1,0 +1,139 @@
+================================================================================
+EVENTFLOW AI — TEST EVENT SCENARIOS
+================================================================================
+Use these in Event Planner (form fields) or AI Agent (paste as chat message).
+Day reference: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Sat, 6=Sun (0=Monday in form)
+
+================================================================================
+TEST 1 — Cricket match at Chinnaswamy Stadium (Planned, High impact)
+================================================================================
+AI Agent message:
+  Cricket match at Chinnaswamy Stadium this Saturday evening
+
+Event Planner fields:
+  Event Type:     planned
+  Event Cause:    public_event
+  Corridor:       CBD 2
+  Zone:           Central Zone 2
+  Priority:       High
+  Latitude:       12.9788
+  Longitude:      77.5995
+  Hour:           18
+  Day:            6
+  Month:          3
+
+Map tip: Switch to Satellite, zoom to stadium, click exact gate/entrance.
+
+Expected: High/Critical congestion, ~15-20 officers, diversions via CBD 1.
+
+
+================================================================================
+TEST 2 — Political rally on Mysore Road (Planned, procession)
+================================================================================
+AI Agent message:
+  Political procession on Mysore Road this Sunday morning
+
+Event Planner fields:
+  Event Type:     planned
+  Event Cause:    procession
+  Corridor:       Mysore Road
+  Zone:           West Zone 1
+  Priority:       High
+  Latitude:       12.9445
+  Longitude:      77.5274
+  Hour:           10
+  Day:            0
+  Month:          11
+
+Map tip: Pin location near Nayandahalli or Deepanjali Nagar junction.
+
+Expected: Moderate-High impact, barricades likely, manpower for crowd control.
+
+
+================================================================================
+TEST 3 — Metro construction on ORR East (Planned, long duration)
+================================================================================
+AI Agent message:
+  Metro construction work on ORR near Marathahalli Wednesday 9 AM
+
+Event Planner fields:
+  Event Type:     planned
+  Event Cause:    construction
+  Corridor:       ORR East 1
+  Zone:           East Zone 1
+  Priority:       High
+  Latitude:       12.9591
+  Longitude:      77.6974
+  Hour:           9
+  Day:            2
+  Month:          1
+
+Map tip: Use Hybrid view to see ORR + pin exact construction stretch.
+
+Expected: Longer duration estimate, diversion via ORR East 2 or Old Madras Road.
+
+
+================================================================================
+TEST 4 — BMTC bus breakdown on Hosur Road (Unplanned, peak hour)
+================================================================================
+AI Agent message:
+  BMTC bus breakdown on Hosur Road Friday evening peak hour
+
+Event Planner fields:
+  Event Type:     unplanned
+  Event Cause:    vehicle_breakdown
+  Corridor:       Hosur Road
+  Zone:           South Zone 2
+  Priority:       High
+  Latitude:       12.9071
+  Longitude:      77.6286
+  Hour:           18
+  Day:            4
+  Month:          3
+
+Map tip: Pin exact lane where bus is stopped.
+
+Expected: Moderate impact, fewer officers, usually no full road closure.
+
+
+================================================================================
+TEST 5 — Tree fall on Bellary Road during monsoon (Unplanned, closure risk)
+================================================================================
+AI Agent message:
+  Tree fall blocking Bellary Road near Sankey Thursday evening
+
+Event Planner fields:
+  Event Type:     unplanned
+  Event Cause:    tree_fall
+  Corridor:       Bellary Road 1
+  Zone:           Central Zone 1
+  Priority:       High
+  Latitude:       13.0061
+  Longitude:      77.5794
+  Hour:           17
+  Day:            3
+  Month:          7
+
+Map tip: Satellite view helps spot tree canopy near road.
+
+Expected: Higher closure probability, barricade points around impact zone.
+
+
+================================================================================
+BONUS — Quick stats test (AI Agent only)
+================================================================================
+AI Agent message:
+  What are the highest risk corridors in Bengaluru?
+
+Expected: Summary of 8,173 events + top corridors table in chat.
+
+
+================================================================================
+DEMO ORDER FOR JUDGES (recommended)
+================================================================================
+  1. Test 1 — Cricket match (planned, flagship demo)
+  2. Test 4 — Bus breakdown (unplanned, everyday incident)
+  3. Test 2 — Rally (manpower + barricades)
+  4. Bonus  — Ask for city statistics in AI Agent
+
+================================================================================
