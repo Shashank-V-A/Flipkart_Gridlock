@@ -37,7 +37,7 @@ export default function ChatAgent() {
     {
       role: 'assistant',
       content:
-        "Hi — I'm **EventFlow AI**. Describe any Bengaluru traffic event and I'll forecast impact and recommend a deployment plan.\n\nTry: *Cricket match at Chinnaswamy Stadium Saturday evening*",
+        "Hi — I'm **Namma Trust AI**. Describe any Bengaluru traffic event and I'll forecast impact and recommend a deployment plan.\n\nTry: *Cricket match at Chinnaswamy Stadium Saturday evening*",
     },
   ])
   const [input, setInput] = useState('')

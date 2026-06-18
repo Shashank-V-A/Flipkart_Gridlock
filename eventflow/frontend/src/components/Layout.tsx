@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  Bot, Brain, LayoutDashboard, MapPin, Route, Radio,
+  Bot, Brain, LayoutDashboard, LogOut, MapPin, Route,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { api } from '../api'
+import { useAuth } from '../context/AuthContext'
 
 const nav = [
   { to: '/agent', label: 'Agent', icon: Bot, desc: 'Natural language' },
@@ -26,6 +27,13 @@ export default function Layout() {
   const [backendOk, setBackendOk] = useState<boolean | null>(null)
   const [llmOk, setLlmOk] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   useEffect(() => {
     api.health()
@@ -39,15 +47,17 @@ export default function Layout() {
   return (
     <div className="app-bg flex min-h-screen">
       <aside className="flex w-[220px] shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="px-5 py-6">
+        <div className="px-4 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-accent-muted)] ring-1 ring-[var(--color-accent)]/20">
-              <Radio className="h-4 w-4 text-[var(--color-accent)]" strokeWidth={2} />
-            </div>
-            <div>
-              <p className="text-sm font-bold tracking-tight text-[var(--color-fg)]">EventFlow</p>
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--color-subtle)]">
-                Bengaluru
+            <img
+              src="/namma-trust-logo.png"
+              alt="Namma Trust — Bangalore City Traffic Police"
+              className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-[var(--color-border)]"
+            />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold tracking-tight text-[var(--color-fg)]">Namma Trust</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[var(--color-subtle)]">
+                Traffic Police
               </p>
             </div>
           </div>
@@ -86,7 +96,34 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="border-t border-[var(--color-border)] p-4">
+        <div className="border-t border-[var(--color-border)] p-4 space-y-3">
+          {user && (
+            <div className="flex items-center gap-2.5 rounded-xl bg-[var(--color-card)] px-3 py-2.5">
+              {user.picture ? (
+                <img
+                  src={user.picture}
+                  alt=""
+                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent-muted)] text-xs font-bold text-[var(--color-accent)]">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[11px] font-medium text-[var(--color-fg)]">{user.name}</p>
+                <p className="truncate text-[10px] text-[var(--color-subtle)]">{user.email}</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="shrink-0 rounded-lg p-1.5 text-[var(--color-subtle)] transition-colors hover:bg-white/[0.05] hover:text-[var(--color-fg)]"
+                title="Sign out"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-2.5 rounded-xl bg-[var(--color-card)] px-3 py-2.5">
             <span className={clsx(
               'h-1.5 w-1.5 shrink-0 rounded-full',
@@ -107,7 +144,7 @@ export default function Layout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex h-12 shrink-0 items-center border-b border-[var(--color-border)] px-8">
           <p className="text-xs font-medium text-[var(--color-subtle)]">
-            {pageTitles[location.pathname] ?? 'EventFlow'}
+            {pageTitles[location.pathname] ?? 'Namma Trust'}
           </p>
         </div>
         <main className="flex-1 overflow-auto">

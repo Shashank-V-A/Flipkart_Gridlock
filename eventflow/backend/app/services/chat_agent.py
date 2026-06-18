@@ -133,7 +133,7 @@ class ChatAgent:
         steps.append({"agent": "Orchestrator", "action": "Greeting detected"})
         return {
             "reply": (
-                "👋 **Hello! I'm EventFlow AI** — your Bengaluru traffic intelligence agent.\n\n"
+                "👋 **Hello! I'm Namma Trust AI** — your Bengaluru traffic intelligence agent.\n\n"
                 "I can **forecast congestion impact** and **recommend deployment plans** for planned and unplanned events.\n\n"
                 "Just describe an event in plain English, for example:\n"
                 "• *Cricket match at Chinnaswamy Stadium Saturday 6 PM*\n"
@@ -152,7 +152,7 @@ class ChatAgent:
         steps.append({"agent": "Orchestrator", "action": "Help requested"})
         return {
             "reply": (
-                "**How to use EventFlow Agent:**\n\n"
+                "**How to use Namma Trust Agent:**\n\n"
                 "1️⃣ **Describe an event** — type, location, time\n"
                 "2️⃣ **Forecast Agent** — predicts congestion score, duration, closure risk\n"
                 "3️⃣ **Plan Agent** — recommends officers, barricades, diversion routes\n"

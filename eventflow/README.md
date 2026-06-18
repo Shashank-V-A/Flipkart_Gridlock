@@ -1,6 +1,6 @@
-# EventFlow AI
+# Namma Trust
 
-AI-driven event congestion forecasting and resource recommendation system for Bengaluru traffic — built for the Flipkart Grid Hackathon **Event-Driven Congestion** problem statement.
+AI-driven event congestion forecasting and resource recommendation for **Bangalore City Traffic Police** — built for the Flipkart Grid Hackathon **Event-Driven Congestion** problem statement.
 
 ## What it does
 
@@ -36,16 +36,37 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:5173**
+Open **http://localhost:5173** — you will be prompted to **Sign in with Google** before accessing the app.
+
+Or double-click `start.bat` in the `eventflow` folder to launch both servers.
+
+## Google Sign-In (required)
+
+All pages and API routes (except health check and login) require authentication.
+
+1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create an **OAuth 2.0 Client ID** (Web application).
+2. Add **Authorized JavaScript origins**: `http://localhost:5173`
+3. Copy credentials into env files:
+   - `backend/.env` — `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `JWT_SECRET`
+   - `frontend/.env` — `VITE_GOOGLE_CLIENT_ID` (same client ID as backend)
+4. Restart both servers after changing env files.
+
+Generate a JWT secret:
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/health` | Health check |
+| GET | `/api/health` | Health check (public) |
+| POST | `/api/auth/google` | Google sign-in (public) |
+| GET | `/api/auth/me` | Current user profile |
 | GET | `/api/analytics/summary` | Dashboard stats |
 | GET | `/api/events/map` | Geo events for map |
 | POST | `/api/forecast` | AI impact forecast + recommendations |
+| POST | `/api/chat` | Natural-language agent |
 | POST | `/api/feedback` | Post-event learning log |
 
 ## Model Performance
@@ -57,10 +78,10 @@ Open **http://localhost:5173**
 ## Pages
 
 1. **AI Agent** — Chat in plain English → autonomous forecast + deployment plan
-2. **Dashboard** — Analytics, cause breakdown, corridor risk table
+2. **Overview** — Analytics, cause breakdown, corridor risk table
 3. **Live Map** — Filterable event heatmap across Bengaluru
 4. **Event Planner** — Input event details → get AI forecast + deployment plan
-5. **Post-Event Learning** — Feedback loop for continuous improvement
+5. **Learning** — Feedback loop for continuous improvement
 
 ## AI Agent
 
@@ -83,6 +104,10 @@ The agent runs: **Sense** (parse message) → **Forecast** (ML models) → **Pla
    OPENROUTER_API_KEY=sk-or-v1-your-key-here
    OPENROUTER_MODEL=qwen/qwen-2.5-7b-instruct
    ```
-4. Restart the backend — the AI Agent page will show **LLM Enhanced**
+4. Restart the backend — the AI Agent page will show **LLM enhanced**
 
 Without a key, the agent still works using template-based replies.
+
+## Test scenarios
+
+See `TEST_EVENTS.txt` for five demo scenarios (cricket match, rally, construction, bus breakdown, tree fall).

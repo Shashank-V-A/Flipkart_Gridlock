@@ -12,20 +12,71 @@ import type {
 } from './types'
 
 const BASE = '/api'
+const TOKEN_KEY = 'namma_trust_token'
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY)
+}
+
+export function setAuthToken(token: string) {
+  localStorage.setItem(TOKEN_KEY, token)
+}
+
+export function clearAuthToken() {
+  localStorage.removeItem(TOKEN_KEY)
+}
 
 async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getAuthToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string> | undefined),
+  }
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers,
   })
+
+  if (res.status === 401 && path !== '/auth/google') {
+    clearAuthToken()
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login'
+    }
+    throw new Error('Session expired. Please sign in again.')
+  }
+
   if (!res.ok) {
-    const err = await res.text()
-    throw new Error(err || `Request failed: ${res.status}`)
+    let message = `Request failed: ${res.status}`
+    try {
+      const body = await res.json()
+      if (body.detail) message = typeof body.detail === 'string' ? body.detail : message
+    } catch {
+      const err = await res.text()
+      if (err) message = err
+    }
+    throw new Error(message)
   }
   return res.json()
 }
 
+export interface AuthUser {
+  sub: string
+  email: string
+  name: string
+  picture?: string | null
+}
+
 export const api = {
+  googleLogin: (credential: string) =>
+    fetchJson<{ access_token: string; user: AuthUser }>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential }),
+    }),
+  me: () => fetchJson<AuthUser>('/auth/me'),
   health: () => fetchJson<{ status: string; models_loaded: boolean; llm_available?: boolean }>('/health'),
   metadata: () => fetchJson<Metadata>('/metadata'),
   summary: () => fetchJson<Summary>('/analytics/summary'),

@@ -41,3 +41,19 @@ class ChatResponse(BaseModel):
     parsed: dict | None = None
     forecast: dict | None = None
     suggestions: list[str] = Field(default_factory=list)
+
+
+class GoogleAuthRequest(BaseModel):
+    credential: str = Field(..., min_length=10)
+
+
+class UserProfile(BaseModel):
+    sub: str
+    email: str
+    name: str
+    picture: str | None = None
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    user: UserProfile

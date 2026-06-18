@@ -1,24 +1,27 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from .schemas import ChatRequest, FeedbackRequest, ForecastRequest
+from .middleware.auth import AuthMiddleware
+from .schemas import AuthResponse, ChatRequest, FeedbackRequest, ForecastRequest, GoogleAuthRequest, UserProfile
 from .services.analytics import AnalyticsService
+from .services.auth_service import create_access_token, verify_google_token
 from .services.chat_agent import ChatAgent
 from .services.predictor import PredictorService
 
 app = FastAPI(
-    title="EventFlow AI",
-    description="Event-driven congestion forecasting and resource recommendation for Bengaluru traffic",
+    title="Namma Trust",
+    description="Event-driven congestion forecasting and resource recommendation for Bengaluru City Traffic Police",
     version="1.0.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(AuthMiddleware)
 
 predictor = PredictorService()
 analytics = AnalyticsService()
@@ -33,6 +36,27 @@ def health():
         "models_loaded": predictor.is_ready(),
         "llm_available": is_llm_available(),
     }
+
+
+@app.post("/api/auth/google", response_model=AuthResponse)
+def google_auth(body: GoogleAuthRequest):
+    try:
+        user = verify_google_token(body.credential)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=401, detail="Google sign-in failed") from exc
+
+    token = create_access_token(user)
+    return AuthResponse(access_token=token, user=UserProfile(**user))
+
+
+@app.get("/api/auth/me", response_model=UserProfile)
+def auth_me(request: Request):
+    user = getattr(request.state, "user", None)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return UserProfile(**user)
 
 
 @app.get("/api/metadata")

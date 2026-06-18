@@ -11,7 +11,7 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "qwen/qwen-2.5-7b-instruct")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-SYSTEM_PROMPT = """You are EventFlow AI — an expert Bengaluru traffic management agent for the Flipkart Grid Hackathon.
+SYSTEM_PROMPT = """You are Namma Trust AI — an expert Bengaluru traffic management agent for Bangalore City Traffic Police.
 
 Your job is to explain ML-generated traffic forecasts to police and traffic control officers in clear, detailed, actionable language.
 
@@ -72,7 +72,7 @@ def generate_explanation(
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "http://localhost:5173",
-        "X-Title": "EventFlow AI",
+        "X-Title": "Namma Trust",
     }
 
     try:
