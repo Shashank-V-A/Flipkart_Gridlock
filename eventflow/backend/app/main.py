@@ -68,42 +68,66 @@ def metadata():
 
 @app.get("/api/analytics/summary")
 def analytics_summary():
-    return analytics.get_summary()
+    try:
+        return analytics.get_summary()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get("/api/analytics/causes")
 def analytics_causes():
-    return analytics.get_cause_breakdown()
+    try:
+        return analytics.get_cause_breakdown()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get("/api/analytics/corridors")
 def analytics_corridors():
-    return analytics.get_corridor_stats()
+    try:
+        return analytics.get_corridor_stats()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get("/api/analytics/zones")
 def analytics_zones():
-    return analytics.get_zone_stats()
+    try:
+        return analytics.get_zone_stats()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get("/api/analytics/impact")
 def analytics_impact():
-    return analytics.get_impact_metrics()
+    try:
+        return analytics.get_impact_metrics()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get("/api/analytics/corridor-risk")
 def corridor_risk():
-    return analytics.get_corridor_risk()
+    try:
+        return analytics.get_corridor_risk()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get("/api/analytics/hourly")
 def analytics_hourly():
-    return analytics.get_hourly_pattern()
+    try:
+        return analytics.get_hourly_pattern()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get("/api/events/map")
 def map_events(limit: int = 500, event_type: str | None = None):
-    return analytics.get_map_events(limit=limit, event_type=event_type)
+    try:
+        return analytics.get_map_events(limit=limit, event_type=event_type)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get("/api/events/planned")

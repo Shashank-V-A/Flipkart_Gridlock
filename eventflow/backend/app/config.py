@@ -45,7 +45,12 @@ CORRIDOR_ALTERNATES = {
 
 
 def cors_origins() -> list[str]:
-    origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://namma-trust.vercel.app",
+        "https://eventflow-murex-one.vercel.app",
+    ]
     for key in ("FRONTEND_URL", "VERCEL_URL", "VERCEL_BRANCH_URL"):
         val = os.getenv(key, "").strip()
         if not val:

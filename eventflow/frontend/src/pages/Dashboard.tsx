@@ -47,15 +47,22 @@ export default function Dashboard() {
   if (loading) return <DashboardSkeleton />
 
   if (error || !summary || !impact) {
+    const isNetwork = error?.toLowerCase().includes('failed to fetch') || error?.toLowerCase().includes('network')
     return (
       <EmptyState
         icon={AlertTriangle}
-        title="Backend not connected"
-        description="Start the Python API on port 8000, then refresh this page."
+        title={isNetwork ? 'Backend not connected' : 'Unable to load dashboard'}
+        description={
+          isNetwork
+            ? 'The API is unreachable. Check your connection and refresh.'
+            : error || 'Analytics data could not be loaded. Try signing in again or refresh the page.'
+        }
         action={
-          <code className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2 font-mono text-xs text-[var(--color-accent)]">
-            cd eventflow/backend && uvicorn app.main:app --port 8000
-          </code>
+          isNetwork ? (
+            <code className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2 font-mono text-xs text-[var(--color-accent)]">
+              curl {window.location.origin}/api/health
+            </code>
+          ) : undefined
         }
       />
     )
