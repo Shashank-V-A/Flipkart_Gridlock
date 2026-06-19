@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..config import DATA_PATH, MODELS_DIR
+from ..config import DATA_PATH, MODELS_DIR, WRITABLE_DIR
 from ..data_processor import engineer_features, load_raw_data
 
 
@@ -24,9 +24,19 @@ def _safe_round(val, digits: int = 2, default: float = 0.0) -> float:
 
 class AnalyticsService:
     def __init__(self):
-        self.df = engineer_features(load_raw_data(DATA_PATH))
-        self.feedback_path = MODELS_DIR / "feedback_log.json"
+        self.dataset_missing = not DATA_PATH.exists()
+        if self.dataset_missing:
+            self.df = pd.DataFrame()
+        else:
+            self.df = engineer_features(load_raw_data(DATA_PATH))
+        self.feedback_path = WRITABLE_DIR / "feedback_log.json"
         self._feedback = self._load_feedback()
+
+    def _require_dataset(self):
+        if self.dataset_missing:
+            raise ValueError(
+                "Astram dataset not found. Place events.csv in backend/data/ or set DATA_CSV_PATH."
+            )
 
     def _load_feedback(self) -> list:
         if self.feedback_path.exists():
@@ -35,6 +45,7 @@ class AnalyticsService:
         return []
 
     def get_summary(self) -> dict:
+        self._require_dataset()
         df = self.df
         planned = df[df["event_type"] == "planned"]
         unplanned = df[df["event_type"] == "unplanned"]
@@ -54,6 +65,7 @@ class AnalyticsService:
         }
 
     def get_cause_breakdown(self) -> list[dict]:
+        self._require_dataset()
         grouped = (
             self.df.groupby("event_cause")
             .agg(
@@ -77,6 +89,7 @@ class AnalyticsService:
         ]
 
     def get_corridor_stats(self) -> list[dict]:
+        self._require_dataset()
         grouped = (
             self.df.groupby("corridor")
             .agg(
@@ -99,6 +112,7 @@ class AnalyticsService:
         ]
 
     def get_zone_stats(self) -> list[dict]:
+        self._require_dataset()
         grouped = (
             self.df[self.df["zone"] != "Unknown"]
             .groupby("zone")
@@ -116,6 +130,7 @@ class AnalyticsService:
         ]
 
     def get_hourly_pattern(self) -> list[dict]:
+        self._require_dataset()
         grouped = (
             self.df.groupby("hour")
             .agg(count=("id", "count"), avg_score=("congestion_score", "mean"))
@@ -128,6 +143,7 @@ class AnalyticsService:
         ]
 
     def get_map_events(self, limit: int = 500, event_type: str | None = None) -> list[dict]:
+        self._require_dataset()
         df = self.df.copy()
         if event_type:
             df = df[df["event_type"] == event_type]
@@ -154,6 +170,7 @@ class AnalyticsService:
         ]
 
     def get_planned_events(self) -> list[dict]:
+        self._require_dataset()
         planned = self.df[self.df["event_type"] == "planned"].sort_values("start_dt", ascending=False)
         return [
             {
@@ -249,9 +266,14 @@ class AnalyticsService:
             with open(meta_path, encoding="utf-8") as f:
                 meta = json.load(f)
 
-        corridors = self.df["corridor"].nunique()
-        zones = self.df[self.df["zone"] != "Unknown"]["zone"].nunique()
-        total = len(self.df)
+        if self.dataset_missing:
+            corridors = len(meta.get("corridors", []))
+            zones = len([z for z in meta.get("zones", []) if z != "Unknown"])
+            total = meta.get("samples", 8173)
+        else:
+            corridors = self.df["corridor"].nunique()
+            zones = self.df[self.df["zone"] != "Unknown"]["zone"].nunique()
+            total = len(self.df)
         manual_min = 15
         auto_sec = 30
         saved_min = manual_min - auto_sec / 60
@@ -271,6 +293,7 @@ class AnalyticsService:
         }
 
     def get_corridor_risk(self) -> list[dict]:
+        self._require_dataset()
         grouped = (
             self.df.dropna(subset=["latitude", "longitude"])
             .groupby("corridor")

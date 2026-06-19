@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from .config import cors_origins
 from .middleware.auth import AuthMiddleware
 from .schemas import AuthResponse, ChatRequest, FeedbackRequest, ForecastRequest, GoogleAuthRequest, UserProfile
 from .services.analytics import AnalyticsService
@@ -16,7 +17,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,6 +35,7 @@ def health():
     return {
         "status": "ok",
         "models_loaded": predictor.is_ready(),
+        "dataset_loaded": not analytics.dataset_missing,
         "llm_available": is_llm_available(),
     }
 

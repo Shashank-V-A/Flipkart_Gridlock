@@ -2,26 +2,29 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ..config import MODELS_DIR
+from ..config import MODELS_DIR, WRITABLE_DIR
 
-CALIBRATION_PATH = MODELS_DIR / "calibration.json"
-LEARNING_STATE_PATH = MODELS_DIR / "learning_state.json"
+CALIBRATION_PATH = WRITABLE_DIR / "calibration.json"
+LEARNING_STATE_PATH = WRITABLE_DIR / "learning_state.json"
+BUNDLED_CALIBRATION_PATH = MODELS_DIR / "calibration.json"
+BUNDLED_LEARNING_STATE_PATH = MODELS_DIR / "learning_state.json"
 
-PEAK_HOURS = {8, 9, 17, 18, 19}
+
+def _read_json(path: Path) -> dict | None:
+    if not path.exists():
+        return None
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def load_calibration() -> dict | None:
-    if not CALIBRATION_PATH.exists():
-        return None
-    with open(CALIBRATION_PATH, encoding="utf-8") as f:
-        return json.load(f)
+    return _read_json(CALIBRATION_PATH) or _read_json(BUNDLED_CALIBRATION_PATH)
 
 
 def load_learning_state() -> dict:
-    if not LEARNING_STATE_PATH.exists():
-        return {"retrain_count": 0, "history": []}
-    with open(LEARNING_STATE_PATH, encoding="utf-8") as f:
-        return json.load(f)
+    data = _read_json(LEARNING_STATE_PATH) or _read_json(BUNDLED_LEARNING_STATE_PATH)
+    return data if data is not None else {"retrain_count": 0, "history": []}
+PEAK_HOURS = {8, 9, 17, 18, 19}
 
 
 def _avg_errors(feedback: list, calibration: dict | None = None) -> tuple[float | None, float | None]:
