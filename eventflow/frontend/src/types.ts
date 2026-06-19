@@ -9,6 +9,43 @@ export interface Summary {
   date_range: { start: string; end: string }
 }
 
+export interface ImpactMetrics {
+  manual_planning_minutes: number
+  automated_planning_seconds: number
+  time_saved_per_event_minutes: number
+  estimated_annual_hours_saved: number
+  events_in_dataset: number
+  corridors_covered: number
+  zones_covered: number
+  model_score_r2?: number
+  model_score_mae?: number
+  closure_accuracy_pct?: number
+}
+
+export interface CorridorRisk {
+  corridor: string
+  lat: number
+  lng: number
+  event_count: number
+  avg_score: number
+  closure_rate: number
+  risk_score: number
+  risk_level: 'low' | 'moderate' | 'high' | 'critical'
+}
+
+export interface LearningInsights {
+  entries: number
+  avg_score_error: number | null
+  avg_duration_error_hours: number | null
+  calibrated?: boolean
+  avg_score_error_before?: number | null
+  avg_score_error_after?: number | null
+  avg_duration_error_before?: number | null
+  avg_duration_error_after?: number | null
+  retrain_count?: number
+  message?: string
+}
+
 export interface CauseStat {
   cause: string
   count: number
@@ -70,9 +107,13 @@ export interface ForecastRequest {
 
 export interface ForecastResult {
   congestion_score: number
+  congestion_score_ci?: { low: number; high: number }
   severity_label: string
   estimated_duration_hours: number
+  duration_hours_ci?: { low: number; high: number }
   closure_probability: number
+  peak_hour_warning?: { peak_hour_overlap: boolean; message: string | null }
+  calibration_applied?: boolean
   recommendations: {
     manpower: {
       total_officers: number
@@ -80,6 +121,7 @@ export interface ForecastResult {
       supervisors: number
       reserve_pool: number
       rationale: string
+      data_driven?: boolean
     }
     barricading: {
       count: number
@@ -125,6 +167,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   steps?: AgentStep[]
+  parsed?: Record<string, unknown> | null
   forecast?: ForecastResult | null
 }
 

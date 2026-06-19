@@ -1,10 +1,13 @@
 import type {
   CauseStat,
   ChatResponse,
+  CorridorRisk,
   CorridorStat,
   ForecastRequest,
   ForecastResult,
   HourlyStat,
+  ImpactMetrics,
+  LearningInsights,
   MapEvent,
   Metadata,
   Summary,
@@ -80,6 +83,8 @@ export const api = {
   health: () => fetchJson<{ status: string; models_loaded: boolean; llm_available?: boolean }>('/health'),
   metadata: () => fetchJson<Metadata>('/metadata'),
   summary: () => fetchJson<Summary>('/analytics/summary'),
+  impact: () => fetchJson<ImpactMetrics>('/analytics/impact'),
+  corridorRisk: () => fetchJson<CorridorRisk[]>('/analytics/corridor-risk'),
   causes: () => fetchJson<CauseStat[]>('/analytics/causes'),
   corridors: () => fetchJson<CorridorStat[]>('/analytics/corridors'),
   zones: () => fetchJson<ZoneStat[]>('/analytics/zones'),
@@ -90,7 +95,9 @@ export const api = {
     fetchJson<ForecastResult>('/forecast', { method: 'POST', body: JSON.stringify(body) }),
   feedback: (body: Record<string, unknown>) =>
     fetchJson<Record<string, unknown>>('/feedback', { method: 'POST', body: JSON.stringify(body) }),
-  learning: () => fetchJson<Record<string, unknown>>('/learning'),
+  learning: () => fetchJson<LearningInsights>('/learning'),
+  retrain: () =>
+    fetchJson<Record<string, unknown>>('/learning/retrain', { method: 'POST' }),
   chat: (message: string, history: { role: string; content: string }[] = []) =>
     fetchJson<ChatResponse>('/chat', {
       method: 'POST',

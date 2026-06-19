@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  AlertCircle, CheckCircle2, MapPin, Users,
+  AlertCircle, AlertTriangle, CheckCircle2, MapPin, Users,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { api } from '../api'
@@ -15,6 +15,22 @@ const UNPLANNED_CAUSES = [
   'pot_holes', 'congestion', 'road_conditions', 'others',
 ]
 
+const MAP_CENTER: [number, number] = [12.9716, 77.5946]
+
+const emptyForm = {
+  event_type: 'planned',
+  event_cause: '',
+  corridor: '',
+  zone: '',
+  priority: '',
+  hour: '',
+  day_of_week: '',
+  month: '',
+  latitude: '',
+  longitude: '',
+  description: '',
+}
+
 const severityStyle: Record<string, string> = {
   Critical: 'bg-[rgba(248,113,113,0.12)] text-[var(--color-danger)]',
   High: 'bg-[rgba(251,146,60,0.12)] text-[var(--color-warning)]',
@@ -24,20 +40,10 @@ const severityStyle: Record<string, string> = {
 
 export default function EventPlanner() {
   const [meta, setMeta] = useState<Metadata>({})
-  const [form, setForm] = useState<ForecastRequest>({
-    event_type: 'planned',
-    event_cause: 'public_event',
-    corridor: 'CBD 2',
-    zone: 'Central Zone 2',
-    priority: 'High',
-    latitude: 12.9788,
-    longitude: 77.5995,
-    hour: 18,
-    day_of_week: 6,
-    month: 3,
-    description: '',
-  })
+  const [form, setForm] = useState(emptyForm)
   const [result, setResult] = useState<ForecastResult | null>(null)
+  const [whatIfHour, setWhatIfHour] = useState<number | null>(null)
+  const [whatIfResult, setWhatIfResult] = useState<ForecastResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -47,13 +53,67 @@ export default function EventPlanner() {
 
   const causes = form.event_type === 'planned' ? PLANNED_CAUSES : UNPLANNED_CAUSES
 
+  const lat = form.latitude ? parseFloat(form.latitude) : null
+  const lng = form.longitude ? parseFloat(form.longitude) : null
+  const hasLocation = lat !== null && lng !== null && !Number.isNaN(lat) && !Number.isNaN(lng)
+
+  const buildPayload = (hourOverride?: number): ForecastRequest | null => {
+    const hour = hourOverride ?? parseInt(form.hour, 10)
+    const day_of_week = parseInt(form.day_of_week, 10)
+    const month = parseInt(form.month, 10)
+    if (
+      !form.event_cause || !form.corridor || !form.zone || !form.priority
+      || Number.isNaN(hour) || Number.isNaN(day_of_week) || Number.isNaN(month)
+      || lat === null || lng === null
+    ) {
+      return null
+    }
+    return {
+      event_type: form.event_type,
+      event_cause: form.event_cause,
+      corridor: form.corridor,
+      zone: form.zone,
+      priority: form.priority,
+      latitude: lat,
+      longitude: lng,
+      hour,
+      day_of_week,
+      month,
+      description: form.description || undefined,
+    }
+  }
+
+  useEffect(() => {
+    if (!result || whatIfHour === null) return
+    const baseHour = parseInt(form.hour, 10)
+    if (whatIfHour === baseHour) {
+      setWhatIfResult(null)
+      return
+    }
+    const payload = buildPayload(whatIfHour)
+    if (!payload) return
+    const timer = setTimeout(() => {
+      api.forecast(payload).then(setWhatIfResult).catch(() => setWhatIfResult(null))
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [whatIfHour, result])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError('')
+
+    const payload = buildPayload()
+    if (!payload) {
+      setError('Please fill in all event details and pin a location on the map.')
+      return
+    }
+
+    setLoading(true)
     try {
-      const res = await api.forecast(form)
+      const res = await api.forecast(payload)
       setResult(res)
+      setWhatIfHour(payload.hour)
+      setWhatIfResult(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Forecast failed')
     } finally {
@@ -61,12 +121,12 @@ export default function EventPlanner() {
     }
   }
 
-  const update = (key: keyof ForecastRequest, value: string | number) => {
+  const update = (key: keyof typeof emptyForm, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-4 py-8 sm:px-8">
       <PageHeader
         title="Event Planner"
         description="Forecast congestion impact and get manpower, barricading, and diversion recommendations"
@@ -80,7 +140,7 @@ export default function EventPlanner() {
             <label className="label">Event type</label>
             <select
               value={form.event_type}
-              onChange={(e) => update('event_type', e.target.value)}
+              onChange={(e) => setForm({ ...form, event_type: e.target.value, event_cause: '' })}
               className="input"
             >
               <option value="planned">Planned</option>
@@ -95,6 +155,7 @@ export default function EventPlanner() {
               onChange={(e) => update('event_cause', e.target.value)}
               className="input"
             >
+              <option value="">Select cause</option>
               {causes.map((c) => (
                 <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>
               ))}
@@ -109,6 +170,7 @@ export default function EventPlanner() {
                 onChange={(e) => update('corridor', e.target.value)}
                 className="input"
               >
+                <option value="">Select corridor</option>
                 {(meta.corridors ?? []).map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
@@ -119,31 +181,49 @@ export default function EventPlanner() {
                 onChange={(e) => update('zone', e.target.value)}
                 className="input"
               >
+                <option value="">Select zone</option>
                 {(meta.zones ?? []).map((z) => <option key={z} value={z}>{z}</option>)}
               </select>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="label">Hour</label>
+              <label className="label">Hour (0–23)</label>
               <input
                 type="number"
                 min={0}
                 max={23}
                 value={form.hour}
-                onChange={(e) => update('hour', +e.target.value)}
+                onChange={(e) => update('hour', e.target.value)}
+                placeholder="e.g. 18"
                 className="input"
               />
             </div>
             <div>
-              <label className="label">Day</label>
+              <label className="label">Day (0=Mon, 6=Sun)</label>
               <input
                 type="number"
                 min={0}
                 max={6}
                 value={form.day_of_week}
-                onChange={(e) => update('day_of_week', +e.target.value)}
+                onChange={(e) => update('day_of_week', e.target.value)}
+                placeholder="e.g. 5"
+                className="input"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Month (1–12)</label>
+              <input
+                type="number"
+                min={1}
+                max={12}
+                value={form.month}
+                onChange={(e) => update('month', e.target.value)}
+                placeholder="e.g. 3"
                 className="input"
               />
             </div>
@@ -154,6 +234,7 @@ export default function EventPlanner() {
                 onChange={(e) => update('priority', e.target.value)}
                 className="input"
               >
+                <option value="">Select priority</option>
                 <option value="High">High</option>
                 <option value="Low">Low</option>
               </select>
@@ -167,7 +248,8 @@ export default function EventPlanner() {
                 type="number"
                 step="0.0001"
                 value={form.latitude}
-                onChange={(e) => update('latitude', +e.target.value)}
+                onChange={(e) => update('latitude', e.target.value)}
+                placeholder="Click map to set"
                 className="input font-mono text-xs"
               />
             </div>
@@ -177,7 +259,8 @@ export default function EventPlanner() {
                 type="number"
                 step="0.0001"
                 value={form.longitude}
-                onChange={(e) => update('longitude', +e.target.value)}
+                onChange={(e) => update('longitude', e.target.value)}
+                placeholder="Click map to set"
                 className="input font-mono text-xs"
               />
             </div>
@@ -202,30 +285,32 @@ export default function EventPlanner() {
                 Click map to pin location · scroll to zoom
               </p>
               <p className="mt-0.5 font-mono text-[11px] text-[var(--color-subtle)]">
-                {form.latitude.toFixed(6)}, {form.longitude.toFixed(6)}
+                {hasLocation
+                  ? `${lat!.toFixed(6)}, ${lng!.toFixed(6)}`
+                  : 'No location selected'}
               </p>
             </div>
             <div className="h-96">
               <EventMap
                 events={[]}
-                center={[form.latitude, form.longitude]}
-                zoom={19}
+                center={hasLocation ? [lat!, lng!] : MAP_CENTER}
+                zoom={hasLocation ? 19 : 12}
                 maxZoom={20}
                 showLayerControl
                 pickable
-                onLocationPick={(lat, lng) => {
+                onLocationPick={(pickLat, pickLng) => {
                   setForm((prev) => ({
                     ...prev,
-                    latitude: Math.round(lat * 1e6) / 1e6,
-                    longitude: Math.round(lng * 1e6) / 1e6,
+                    latitude: String(Math.round(pickLat * 1e6) / 1e6),
+                    longitude: String(Math.round(pickLng * 1e6) / 1e6),
                   }))
                 }}
-                eventPin={{
-                  lat: form.latitude,
-                  lng: form.longitude,
+                eventPin={hasLocation ? {
+                  lat: lat!,
+                  lng: lng!,
                   label: 'Event location',
-                }}
-                highlightCenter={result ? [form.latitude, form.longitude] : undefined}
+                } : undefined}
+                highlightCenter={result && hasLocation ? [lat!, lng!] : undefined}
                 impactRadiusKm={result?.recommendations.estimated_impact_radius_km}
                 barricadePoints={result?.recommendations.barricading.points.map((p) => ({
                   lat: p.lat, lng: p.lng, label: p.label,
@@ -240,21 +325,43 @@ export default function EventPlanner() {
             </div>
           ) : (
             <>
+              {result.peak_hour_warning?.peak_hour_overlap && (
+                <div className="flex gap-3 rounded-xl border border-[rgba(251,146,60,0.25)] bg-[rgba(251,146,60,0.08)] p-4">
+                  <AlertTriangle className="h-5 w-5 shrink-0 text-[var(--color-warning)]" />
+                  <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+                    {result.peak_hour_warning.message}
+                  </p>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <StatCard
                   label="Congestion"
-                  value={result.congestion_score}
+                  value={
+                    result.congestion_score_ci
+                      ? `${result.congestion_score_ci.low}–${result.congestion_score_ci.high}`
+                      : result.congestion_score
+                  }
                   hint={
                     <span className={clsx('badge', severityStyle[result.severity_label])}>
                       {result.severity_label}
+                      {result.congestion_score_ci && (
+                        <span className="ml-1 font-normal normal-case opacity-80">
+                          (est. {result.congestion_score})
+                        </span>
+                      )}
                     </span>
                   }
                   trend="warning"
                 />
                 <StatCard
                   label="Duration"
-                  value={`${result.estimated_duration_hours}h`}
-                  hint="Estimated resolution"
+                  value={
+                    result.duration_hours_ci
+                      ? `${result.duration_hours_ci.low}–${result.duration_hours_ci.high}h`
+                      : `${result.estimated_duration_hours}h`
+                  }
+                  hint={`Median est. ${result.estimated_duration_hours}h`}
                 />
                 <StatCard
                   label="Closure prob."
@@ -264,10 +371,50 @@ export default function EventPlanner() {
                 <StatCard
                   label="Officers"
                   value={result.recommendations.manpower.total_officers}
-                  hint="Total deployment"
+                  hint={
+                    result.recommendations.manpower.data_driven
+                      ? 'Data-driven blend'
+                      : 'Total deployment'
+                  }
                   trend="success"
                 />
               </div>
+
+              {whatIfHour !== null && (
+                <div className="card p-5">
+                  <h4 className="mb-1 text-sm font-semibold text-[var(--color-fg)]">What-if: change event hour</h4>
+                  <p className="mb-4 text-xs text-[var(--color-subtle)]">
+                    Slide to compare impact at a different time — same location and event type.
+                  </p>
+                  <input
+                    type="range"
+                    min={0}
+                    max={23}
+                    value={whatIfHour}
+                    onChange={(e) => setWhatIfHour(parseInt(e.target.value, 10))}
+                    className="w-full accent-[var(--color-accent)]"
+                  />
+                  <div className="mt-2 flex items-center justify-between text-xs text-[var(--color-muted)]">
+                    <span>Hour: <strong className="text-[var(--color-fg)]">{whatIfHour}:00</strong></span>
+                    {whatIfResult && whatIfHour !== parseInt(form.hour, 10) && (
+                      <span>
+                        Score {result.congestion_score} →{' '}
+                        <strong className={clsx(
+                          whatIfResult.congestion_score < result.congestion_score
+                            ? 'text-[var(--color-success)]'
+                            : whatIfResult.congestion_score > result.congestion_score
+                              ? 'text-[var(--color-danger)]'
+                              : 'text-[var(--color-fg)]',
+                        )}>
+                          {whatIfResult.congestion_score}
+                        </strong>
+                        {' · '}
+                        Officers {result.recommendations.manpower.total_officers} → {whatIfResult.recommendations.manpower.total_officers}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="card p-5">

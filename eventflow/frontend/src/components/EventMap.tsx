@@ -29,6 +29,16 @@ interface EventMapProps {
   onLocationPick?: (lat: number, lng: number) => void
   eventPin?: { lat: number; lng: number; label?: string }
   maxZoom?: number
+  corridorRisk?: Array<{
+    corridor: string
+    lat: number
+    lng: number
+    risk_score: number
+    risk_level: string
+    closure_rate: number
+    event_count: number
+  }>
+  showCorridorRisk?: boolean
 }
 
 const TILES: Record<MapStyle, { url: string; attribution: string; overlay?: { url: string; attribution: string } }> = {
@@ -48,6 +58,13 @@ const TILES: Record<MapStyle, { url: string; attribution: string; overlay?: { ur
       attribution: '&copy; Esri',
     },
   },
+}
+
+function riskColor(level: string): string {
+  if (level === 'critical') return '#f87171'
+  if (level === 'high') return '#fb923c'
+  if (level === 'moderate') return '#d4a054'
+  return '#4ade80'
 }
 
 function scoreColor(score: number): string {
@@ -141,6 +158,8 @@ export default function EventMap({
   onLocationPick,
   eventPin,
   maxZoom = 19,
+  corridorRisk,
+  showCorridorRisk = false,
 }: EventMapProps) {
   const [internalStyle, setInternalStyle] = useState<MapStyle>('satellite')
   const mapStyle = controlledStyle ?? internalStyle
@@ -179,6 +198,28 @@ export default function EventMap({
         {events.length > 1 && <FitBounds events={events} />}
         {pin && <FlyToCenter center={[pin.lat, pin.lng]} zoom={zoom} />}
         {pickable && onLocationPick && <MapClickHandler onPick={onLocationPick} zoomTo={maxZoom} />}
+
+        {showCorridorRisk && corridorRisk?.map((c) => (
+          <Circle
+            key={`risk-${c.corridor}`}
+            center={[c.lat, c.lng]}
+            radius={800 + c.risk_score * 1200}
+            pathOptions={{
+              color: riskColor(c.risk_level),
+              fillColor: riskColor(c.risk_level),
+              fillOpacity: 0.12,
+              weight: 2,
+            }}
+          >
+            <Popup>
+              <div className="text-sm text-slate-800">
+                <strong>{c.corridor}</strong>
+                <p className="mt-1 text-xs capitalize">{c.risk_level} risk · {c.event_count} events</p>
+                <p className="text-xs">Closure rate: {(c.closure_rate * 100).toFixed(0)}%</p>
+              </div>
+            </Popup>
+          </Circle>
+        ))}
 
         {events.map((e) => (
           <CircleMarker

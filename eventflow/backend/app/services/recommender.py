@@ -30,7 +30,12 @@ def load_stats() -> dict:
         return json.load(f)
 
 
-def estimate_manpower(congestion_score: float, closure_prob: float, event_cause: str) -> dict:
+def estimate_manpower(
+    congestion_score: float,
+    closure_prob: float,
+    event_cause: str,
+    historical: dict | None = None,
+) -> dict:
     base = 2
     if congestion_score >= 8:
         base = 12
@@ -49,14 +54,28 @@ def estimate_manpower(congestion_score: float, closure_prob: float, event_cause:
     }.get(event_cause, 0)
 
     closure_adjust = int(closure_prob * 6)
-    total = base + cause_adjust + closure_adjust
+    rule_total = base + cause_adjust + closure_adjust
+
+    hist_total = None
+    if historical:
+        hist_score = float(historical.get("avg_score", congestion_score))
+        hist_closure = float(historical.get("closure_rate", closure_prob))
+        hist_total = max(2, int(hist_score * 1.2 + hist_closure * 12 + 2))
+
+    total = round((rule_total + hist_total) / 2) if hist_total else rule_total
+
+    rationale = f"Blended rule-based ({rule_total})"
+    if hist_total:
+        rationale += f" with historical pattern ({hist_total}) for this cause/corridor"
+    rationale += f" — severity {congestion_score}/10, {closure_prob:.0%} closure risk"
 
     return {
         "total_officers": total,
         "traffic_controllers": max(2, total // 2),
         "supervisors": max(1, total // 6),
         "reserve_pool": max(1, total // 4),
-        "rationale": f"Based on severity {congestion_score}/10 and {closure_prob:.0%} closure probability",
+        "rationale": rationale,
+        "data_driven": hist_total is not None,
     }
 
 
@@ -119,7 +138,7 @@ def generate_recommendations(
     key = f"{event_cause}|{corridor}"
     historical = stats.get("by_cause_corridor", {}).get(key) or stats.get("by_cause", {}).get(event_cause, {})
 
-    manpower = estimate_manpower(congestion_score, closure_prob, event_cause)
+    manpower = estimate_manpower(congestion_score, closure_prob, event_cause, historical)
     barricades = estimate_barricades(closure_prob, congestion_score, lat, lng, corridor)
     diversions = suggest_diversions(corridor, congestion_score)
 

@@ -84,6 +84,16 @@ def analytics_zones():
     return analytics.get_zone_stats()
 
 
+@app.get("/api/analytics/impact")
+def analytics_impact():
+    return analytics.get_impact_metrics()
+
+
+@app.get("/api/analytics/corridor-risk")
+def corridor_risk():
+    return analytics.get_corridor_risk()
+
+
 @app.get("/api/analytics/hourly")
 def analytics_hourly():
     return analytics.get_hourly_pattern()
@@ -128,3 +138,11 @@ def chat_suggestions():
 @app.get("/api/learning")
 def learning_insights():
     return analytics.get_learning_insights()
+
+
+@app.post("/api/learning/retrain")
+def learning_retrain():
+    try:
+        return analytics.retrain_from_feedback()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

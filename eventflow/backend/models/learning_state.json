@@ -1,0 +1,101 @@
+{
+  "retrain_count": 12,
+  "history": [
+    {
+      "at": "2026-06-19T12:27:39.118514+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    },
+    {
+      "at": "2026-06-19T12:27:41.598349+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    },
+    {
+      "at": "2026-06-19T12:27:42.072071+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    },
+    {
+      "at": "2026-06-19T12:27:42.376977+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    },
+    {
+      "at": "2026-06-19T12:27:43.813086+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    },
+    {
+      "at": "2026-06-19T12:27:43.971984+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    },
+    {
+      "at": "2026-06-19T12:27:44.117866+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    },
+    {
+      "at": "2026-06-19T12:27:44.267368+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    },
+    {
+      "at": "2026-06-19T12:27:44.401776+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    },
+    {
+      "at": "2026-06-19T12:27:44.527070+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    },
+    {
+      "at": "2026-06-19T12:27:44.661335+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    },
+    {
+      "at": "2026-06-19T12:27:44.797797+00:00",
+      "entries": 1,
+      "avg_score_error_before": 1.0,
+      "avg_score_error_after": 0.0,
+      "avg_duration_error_before": 1.0,
+      "avg_duration_error_after": 0.0
+    }
+  ]
+}

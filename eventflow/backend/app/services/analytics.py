@@ -195,13 +195,109 @@ class AnalyticsService:
         }
 
     def get_learning_insights(self) -> dict:
+        from .calibration_service import _avg_errors, load_calibration, load_learning_state
+
         if not self._feedback:
-            return {"entries": 0, "avg_score_error": None, "avg_duration_error": None, "message": "No feedback logged yet"}
-        score_errors = [abs(f["predicted_score"] - f["actual_score"]) for f in self._feedback]
-        dur_errors = [abs(f["predicted_duration_hours"] - f["actual_duration_hours"]) for f in self._feedback]
+            return {
+                "entries": 0,
+                "avg_score_error": None,
+                "avg_duration_error_hours": None,
+                "calibrated": False,
+                "message": "No feedback logged yet",
+            }
+
+        calibration = load_calibration()
+        state = load_learning_state()
+        score_err, dur_err = _avg_errors(self._feedback, calibration)
+
+        before_score, before_dur = _avg_errors(self._feedback, None)
+        after_score, after_dur = _avg_errors(self._feedback, calibration) if calibration else (None, None)
+
         return {
             "entries": len(self._feedback),
-            "avg_score_error": round(sum(score_errors) / len(score_errors), 2),
-            "avg_duration_error_hours": round(sum(dur_errors) / len(dur_errors), 2),
+            "avg_score_error": score_err,
+            "avg_duration_error_hours": dur_err,
+            "calibrated": calibration is not None,
+            "calibration": calibration,
+            "avg_score_error_before": before_score,
+            "avg_score_error_after": after_score if calibration else None,
+            "avg_duration_error_before": before_dur,
+            "avg_duration_error_after": after_dur if calibration else None,
+            "retrain_count": state.get("retrain_count", 0),
             "recent": self._feedback[-5:],
         }
+
+    def retrain_from_feedback(self) -> dict:
+        from .calibration_service import apply_calibration_from_feedback
+
+        if not self._feedback:
+            raise ValueError("Log at least one post-event outcome before retraining")
+
+        result = apply_calibration_from_feedback(self._feedback)
+        return {
+            "status": "calibrated",
+            "message": "Models calibrated from post-event feedback",
+            **result,
+        }
+
+    def get_impact_metrics(self) -> dict:
+        import json
+
+        meta_path = MODELS_DIR / "metadata.json"
+        meta = {}
+        if meta_path.exists():
+            with open(meta_path, encoding="utf-8") as f:
+                meta = json.load(f)
+
+        corridors = self.df["corridor"].nunique()
+        zones = self.df[self.df["zone"] != "Unknown"]["zone"].nunique()
+        total = len(self.df)
+        manual_min = 15
+        auto_sec = 30
+        saved_min = manual_min - auto_sec / 60
+        annual_events = 8000
+
+        return {
+            "manual_planning_minutes": manual_min,
+            "automated_planning_seconds": auto_sec,
+            "time_saved_per_event_minutes": round(saved_min, 1),
+            "estimated_annual_hours_saved": round(annual_events * saved_min / 60),
+            "events_in_dataset": total,
+            "corridors_covered": int(corridors),
+            "zones_covered": int(zones),
+            "model_score_r2": meta.get("score_r2"),
+            "model_score_mae": meta.get("score_mae"),
+            "closure_accuracy_pct": round(float(meta.get("closure_accuracy", 0)) * 100, 1),
+        }
+
+    def get_corridor_risk(self) -> list[dict]:
+        grouped = (
+            self.df.dropna(subset=["latitude", "longitude"])
+            .groupby("corridor")
+            .agg(
+                lat=("latitude", "mean"),
+                lng=("longitude", "mean"),
+                count=("id", "count"),
+                avg_score=("congestion_score", "mean"),
+                closure_rate=("requires_closure_int", "mean"),
+            )
+            .reset_index()
+        )
+        results = []
+        for _, row in grouped.iterrows():
+            if row["corridor"] == "Non-corridor":
+                continue
+            risk = _safe_round(row["closure_rate"] * 0.55 + (row["avg_score"] / 10) * 0.45, 3)
+            level = "critical" if risk >= 0.65 else "high" if risk >= 0.45 else "moderate" if risk >= 0.3 else "low"
+            results.append({
+                "corridor": row["corridor"],
+                "lat": _safe_round(row["lat"], 6),
+                "lng": _safe_round(row["lng"], 6),
+                "event_count": int(row["count"]),
+                "avg_score": _safe_round(row["avg_score"]),
+                "closure_rate": _safe_round(row["closure_rate"], 3),
+                "risk_score": risk,
+                "risk_level": level,
+            })
+        results.sort(key=lambda x: x["risk_score"], reverse=True)
+        return results[:20]

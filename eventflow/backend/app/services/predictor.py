@@ -6,6 +6,7 @@ import pandas as pd
 
 from ..config import MODELS_DIR
 from ..data_processor import get_feature_columns
+from .calibration_service import load_calibration, peak_hour_alert
 from .recommender import generate_recommendations
 
 
@@ -27,6 +28,9 @@ class PredictorService:
         if meta_path.exists():
             with open(meta_path, encoding="utf-8") as f:
                 self.metadata = json.load(f)
+
+    def reload(self):
+        self._load()
 
     def is_ready(self) -> bool:
         return self.score_model is not None
@@ -50,14 +54,23 @@ class PredictorService:
         if not self.is_ready():
             raise RuntimeError("Models not trained. Run train_models first.")
 
+        hour = payload.get("hour", 12)
         X = self._build_input(payload)
         score = float(self.score_model.predict(X)[0])
         duration = float(self.duration_model.predict(X)[0])
         closure_prob = float(self.closure_model.predict_proba(X)[0][1])
 
+        calibration = load_calibration()
+        if calibration:
+            score += calibration.get("score_adjustment", 0)
+            duration += calibration.get("duration_adjustment_hours", 0)
+
         score = round(max(1, min(10, score)), 1)
         duration = round(max(0.5, duration), 2)
         closure_prob = round(closure_prob, 3)
+
+        score_mae = float(self.metadata.get("score_mae", 0.29))
+        dur_mae = float(self.metadata.get("duration_mae_hours", 68))
 
         severity_label = (
             "Critical" if score >= 8 else
@@ -76,14 +89,28 @@ class PredictorService:
             lng=payload.get("longitude", 77.5946),
         )
 
+        peak = peak_hour_alert(int(hour))
+
         return {
             "congestion_score": score,
+            "congestion_score_ci": {
+                "low": round(max(1, score - score_mae), 1),
+                "high": round(min(10, score + score_mae), 1),
+            },
             "severity_label": severity_label,
             "estimated_duration_hours": duration,
+            "duration_hours_ci": {
+                "low": round(max(0.5, duration - dur_mae * 0.25), 1),
+                "high": round(duration + dur_mae * 0.25, 1),
+            },
             "closure_probability": closure_prob,
+            "peak_hour_warning": peak,
+            "calibration_applied": calibration is not None,
             "recommendations": recommendations,
             "model_metadata": {
                 "score_mae": self.metadata.get("score_mae"),
                 "duration_mae_hours": self.metadata.get("duration_mae_hours"),
+                "score_r2": self.metadata.get("score_r2"),
+                "closure_accuracy": self.metadata.get("closure_accuracy"),
             },
         }
