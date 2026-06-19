@@ -13,14 +13,14 @@ import EmptyState from '../components/ui/EmptyState'
 import DashboardSkeleton from '../components/ui/DashboardSkeleton'
 
 const CHART_TOOLTIP = {
-  background: '#16161a',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: '#F5F1BE',
+  border: '1px solid rgba(42, 40, 24, 0.12)',
   borderRadius: 12,
   fontSize: 12,
-  color: '#fafafa',
+  color: '#2a2818',
 }
 
-const CHART_COLORS = ['#d4a054', '#a1a1aa', '#fb923c', '#4ade80', '#f87171', '#71717a']
+const CHART_COLORS = ['#2D6A4F', '#52796f', '#d97706', '#16a34a', '#dc2626', '#6b7280']
 
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null)
@@ -155,12 +155,12 @@ export default function Dashboard() {
           <h3 className="mb-5 text-sm font-semibold text-[var(--color-fg)]">Event causes</h3>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={causes} layout="vertical" margin={{ left: 4, right: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
-              <XAxis type="number" stroke="#52525b" fontSize={11} tickLine={false} axisLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(42,40,24,0.08)" horizontal={false} />
+              <XAxis type="number" stroke="#78766a" fontSize={11} tickLine={false} axisLine={false} />
               <YAxis
                 dataKey="cause"
                 type="category"
-                stroke="#52525b"
+                stroke="#78766a"
                 fontSize={10}
                 width={72}
                 tickLine={false}
@@ -170,7 +170,7 @@ export default function Dashboard() {
               <Tooltip contentStyle={CHART_TOOLTIP} labelFormatter={(v) => String(v).replace(/_/g, ' ')} />
               <Bar dataKey="count" radius={[0, 3, 3, 0]} barSize={14}>
                 {causes.map((_, i) => (
-                  <Cell key={i} fill={i === 0 ? '#d4a054' : CHART_COLORS[i % CHART_COLORS.length]} />
+                  <Cell key={i} fill={i === 0 ? '#2D6A4F' : CHART_COLORS[i % CHART_COLORS.length]} />
                 ))}
               </Bar>
             </BarChart>
@@ -181,11 +181,11 @@ export default function Dashboard() {
           <h3 className="mb-5 text-sm font-semibold text-[var(--color-fg)]">Hourly pattern</h3>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={hourly}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(42,40,24,0.08)" />
               <XAxis
                 dataKey="hour"
                 interval={0}
-                stroke="#52525b"
+                stroke="#78766a"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -196,9 +196,9 @@ export default function Dashboard() {
                   return `${displayHour}${period}`
                 }}
               />
-              <YAxis stroke="#52525b" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="#78766a" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip contentStyle={CHART_TOOLTIP} />
-              <Line type="monotone" dataKey="count" stroke="#d4a054" strokeWidth={2} dot={false} name="Events" />
+              <Line type="monotone" dataKey="count" stroke="#2D6A4F" strokeWidth={2} dot={false} name="Events" />
               <Line type="monotone" dataKey="avg_score" stroke="#a1a1aa" strokeWidth={1.5} dot={false} name="Score" strokeDasharray="4 4" />
             </LineChart>
           </ResponsiveContainer>
@@ -228,7 +228,7 @@ export default function Dashboard() {
                         'badge',
                         c.avg_score >= 6
                           ? 'bg-[rgba(251,146,60,0.12)] text-[var(--color-warning)]'
-                          : 'bg-white/[0.04] text-[var(--color-muted)]',
+                          : 'bg-[rgba(42,40,24,0.05)] text-[var(--color-muted)]',
                       )}>
                         {c.avg_score}
                       </span>

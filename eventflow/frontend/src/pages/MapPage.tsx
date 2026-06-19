@@ -8,7 +8,7 @@ import SegmentedControl from '../components/ui/SegmentedControl'
 
 const LEGEND = [
   { color: '#4ade80', label: 'Low (1–4)' },
-  { color: '#d4a054', label: 'Moderate (4–6)' },
+  { color: '#2D6A4F', label: 'Moderate (4–6)' },
   { color: '#fb923c', label: 'High (6–8)' },
   { color: '#f87171', label: 'Critical (8+)' },
 ]

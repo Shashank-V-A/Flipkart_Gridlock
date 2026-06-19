@@ -43,7 +43,7 @@ interface EventMapProps {
 
 const TILES: Record<MapStyle, { url: string; attribution: string; overlay?: { url: string; attribution: string } }> = {
   street: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     attribution: '&copy; OSM &copy; CARTO',
   },
   satellite: {
@@ -63,14 +63,14 @@ const TILES: Record<MapStyle, { url: string; attribution: string; overlay?: { ur
 function riskColor(level: string): string {
   if (level === 'critical') return '#f87171'
   if (level === 'high') return '#fb923c'
-  if (level === 'moderate') return '#d4a054'
+  if (level === 'moderate') return '#2D6A4F'
   return '#4ade80'
 }
 
 function scoreColor(score: number): string {
   if (score >= 8) return '#f87171'
   if (score >= 6) return '#fb923c'
-  if (score >= 4) return '#d4a054'
+  if (score >= 4) return '#2D6A4F'
   return '#4ade80'
 }
 
@@ -135,7 +135,7 @@ function LayerControl({
           className={`rounded-lg px-3 py-1.5 text-left text-xs font-medium transition-colors ${
             style === o.id
               ? 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
-              : 'text-[var(--color-muted)] hover:bg-white/[0.03] hover:text-[var(--color-fg)]'
+              : 'text-[var(--color-muted)] hover:bg-[rgba(42,40,24,0.04)] hover:text-[var(--color-fg)]'
           }`}
         >
           {o.label}
@@ -161,7 +161,7 @@ export default function EventMap({
   corridorRisk,
   showCorridorRisk = false,
 }: EventMapProps) {
-  const [internalStyle, setInternalStyle] = useState<MapStyle>('satellite')
+  const [internalStyle, setInternalStyle] = useState<MapStyle>('street')
   const mapStyle = controlledStyle ?? internalStyle
   const setMapStyle = setInternalStyle
   const tiles = TILES[mapStyle]
@@ -248,8 +248,8 @@ export default function EventMap({
             center={[pin.lat, pin.lng]}
             radius={12}
             pathOptions={{
-              color: '#d4a054',
-              fillColor: '#d4a054',
+              color: '#2D6A4F',
+              fillColor: '#2D6A4F',
               fillOpacity: 0.9,
               weight: 3,
             }}
@@ -267,7 +267,7 @@ export default function EventMap({
             key={`b-${i}`}
             center={[p.lat, p.lng]}
             radius={9}
-            pathOptions={{ color: '#fafafa', fillColor: '#fafafa', fillOpacity: 0.95, weight: 2 }}
+            pathOptions={{ color: '#FDFBD4', fillColor: '#FDFBD4', fillOpacity: 0.95, weight: 2 }}
           >
             <Popup><span className="text-xs text-slate-800">{p.label}</span></Popup>
           </CircleMarker>
@@ -278,8 +278,8 @@ export default function EventMap({
             center={highlightCenter}
             radius={impactRadiusKm * 1000}
             pathOptions={{
-              color: '#d4a054',
-              fillColor: '#d4a054',
+              color: '#2D6A4F',
+              fillColor: '#2D6A4F',
               fillOpacity: 0.1,
               weight: 2,
               dashArray: '6 4',

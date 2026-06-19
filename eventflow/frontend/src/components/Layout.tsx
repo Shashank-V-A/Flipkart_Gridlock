@@ -61,7 +61,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 'group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all',
                 isActive
                   ? 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
-                  : 'text-[var(--color-muted)] hover:bg-white/[0.03] hover:text-[var(--color-fg)]',
+                  : 'text-[var(--color-muted)] hover:bg-[rgba(42,40,24,0.04)] hover:text-[var(--color-fg)]',
               )
             }
           >
@@ -100,7 +100,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <button
               type="button"
               onClick={handleLogout}
-              className="shrink-0 rounded-lg p-1.5 text-[var(--color-subtle)] transition-colors hover:bg-white/[0.05] hover:text-[var(--color-fg)]"
+              className="shrink-0 rounded-lg p-1.5 text-[var(--color-subtle)] transition-colors hover:bg-[rgba(42,40,24,0.05)] hover:text-[var(--color-fg)]"
               title="Sign out"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -126,7 +126,7 @@ export default function Layout() {
         <div className="fixed inset-0 z-50 md:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-[rgba(42,40,24,0.45)]"
             onClick={() => setMobileOpen(false)}
             aria-label="Close menu"
           />
