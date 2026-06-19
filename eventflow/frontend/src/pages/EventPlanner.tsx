@@ -76,6 +76,20 @@ export default function EventPlanner() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const formatDuration = (hours: number) => {
+    if (hours < 24) {
+      return `≈ ${Math.round(hours)} hrs`;
+    }
+
+    const days = Math.round(hours / 24);
+
+    if (days === 1) {
+      return "≈ 1 day";
+    }
+
+    return `≈ ${days} days`;
+  };
+
   return (
     <div className="px-8 py-8">
       <PageHeader
@@ -294,9 +308,10 @@ export default function EventPlanner() {
                   }
                   trend="warning"
                 />
+
                 <StatCard
                   label="Duration"
-                  value={`${result.estimated_duration_hours}h`}
+                  value={formatDuration(result.estimated_duration_hours)}
                   hint="Estimated resolution"
                 />
                 <StatCard

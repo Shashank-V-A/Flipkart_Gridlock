@@ -30,7 +30,9 @@ def load_stats() -> dict:
         return json.load(f)
 
 
-def estimate_manpower(congestion_score: float, closure_prob: float, event_cause: str) -> dict:
+def estimate_manpower(
+    congestion_score: float, closure_prob: float, event_cause: str
+) -> dict:
     base = 2
     if congestion_score >= 8:
         base = 12
@@ -75,14 +77,18 @@ def estimate_barricades(
     for i, angle in enumerate(angles[: min(4, count)]):
         rad = math.radians(angle)
         offset_lat = lat + (radius_km / 111) * math.cos(rad)
-        offset_lng = lng + (radius_km / (111 * math.cos(math.radians(lat)))) * math.sin(rad)
-        points.append({
-            "id": f"B{i + 1}",
-            "lat": round(offset_lat, 6),
-            "lng": round(offset_lng, 6),
-            "type": "hard_barricade" if closure_prob > 0.5 else "soft_cone",
-            "label": f"Closure point {i + 1} — {corridor}",
-        })
+        offset_lng = lng + (radius_km / (111 * math.cos(math.radians(lat)))) * math.sin(
+            rad
+        )
+        points.append(
+            {
+                "id": f"B{i + 1}",
+                "lat": round(offset_lat, 6),
+                "lng": round(offset_lng, 6),
+                "type": "hard_barricade" if closure_prob > 0.5 else "soft_cone",
+                "label": f"Closure point {i + 1} — {corridor}",
+            }
+        )
 
     return {
         "count": count,
@@ -93,16 +99,20 @@ def estimate_barricades(
 
 
 def suggest_diversions(corridor: str, congestion_score: float) -> list[dict]:
-    alternates = CORRIDOR_ALTERNATES.get(corridor, ["ORR segments", "Parallel service roads"])
+    alternates = CORRIDOR_ALTERNATES.get(
+        corridor, ["ORR segments", "Parallel service roads"]
+    )
     diversions = []
     for i, alt in enumerate(alternates[:3]):
-        diversions.append({
-            "route_id": f"D{i + 1}",
-            "corridor": alt,
-            "priority": i + 1,
-            "estimated_delay_minutes": round(5 + congestion_score * 3 + i * 4),
-            "description": f"Divert via {alt} to bypass {corridor} congestion zone",
-        })
+        diversions.append(
+            {
+                "route_id": f"D{i + 1}",
+                "corridor": alt,
+                "priority": i + 1,
+                "estimated_delay_minutes": round(5 + congestion_score * 3 + i * 4),
+                "description": f"Divert via {alt} to bypass {corridor} congestion zone",
+            }
+        )
     return diversions
 
 
@@ -117,7 +127,9 @@ def generate_recommendations(
 ) -> dict:
     stats = load_stats()
     key = f"{event_cause}|{corridor}"
-    historical = stats.get("by_cause_corridor", {}).get(key) or stats.get("by_cause", {}).get(event_cause, {})
+    historical = stats.get("by_cause_corridor", {}).get(key) or stats.get(
+        "by_cause", {}
+    ).get(event_cause, {})
 
     manpower = estimate_manpower(congestion_score, closure_prob, event_cause)
     barricades = estimate_barricades(closure_prob, congestion_score, lat, lng, corridor)
@@ -127,20 +139,26 @@ def generate_recommendations(
     for name, data in stats.get("junction_hotspots", {}).items():
         dist = math.sqrt((data["lat"] - lat) ** 2 + (data["lng"] - lng) ** 2) * 111
         if dist < 3:
-            nearby_hotspots.append({"junction": name, "distance_km": round(dist, 2), **data})
+            nearby_hotspots.append(
+                {"junction": name, "distance_km": round(dist, 2), **data}
+            )
 
     nearby_hotspots.sort(key=lambda x: x["event_count"], reverse=True)
 
-    return _sanitize({
-        "manpower": manpower,
-        "barricading": barricades,
-        "diversions": diversions,
-        "historical_reference": historical,
-        "nearby_hotspots": nearby_hotspots[:5],
-        "estimated_impact_radius_km": barricades["radius_km"],
-        "estimated_duration_hours": round(duration_hours, 2),
-        "action_checklist": build_checklist(event_cause, closure_prob, congestion_score),
-    })
+    return _sanitize(
+        {
+            "manpower": manpower,
+            "barricading": barricades,
+            "diversions": diversions,
+            "historical_reference": historical,
+            "nearby_hotspots": nearby_hotspots[:5],
+            "estimated_impact_radius_km": barricades["radius_km"],
+            "estimated_duration_hours": round(duration_hours, 2),
+            "action_checklist": build_checklist(
+                event_cause, closure_prob, congestion_score
+            ),
+        }
+    )
 
 
 def build_checklist(event_cause: str, closure_prob: float, score: float) -> list[str]:
