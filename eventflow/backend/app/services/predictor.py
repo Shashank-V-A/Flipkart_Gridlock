@@ -30,15 +30,13 @@ class PredictorService:
             with open(meta_path, encoding="utf-8") as f:
                 self.metadata = json.load(f)
 
-<<<<<<< HEAD
-    def reload(self):
-        self._load()
-=======
         stats_path = MODELS_DIR / "recommendation_stats.json"
         if stats_path.exists():
             with open(stats_path, encoding="utf-8") as f:
                 self.stats = json.load(f)
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
+
+    def reload(self):
+        self._load()
 
     def is_ready(self) -> bool:
         return self.score_model is not None

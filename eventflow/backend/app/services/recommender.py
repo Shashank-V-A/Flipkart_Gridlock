@@ -31,14 +31,10 @@ def load_stats() -> dict:
 
 
 def estimate_manpower(
-<<<<<<< HEAD
     congestion_score: float,
     closure_prob: float,
     event_cause: str,
     historical: dict | None = None,
-=======
-    congestion_score: float, closure_prob: float, event_cause: str
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
 ) -> dict:
     base = 2
     if congestion_score >= 8:

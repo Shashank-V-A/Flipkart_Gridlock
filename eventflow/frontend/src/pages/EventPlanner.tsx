@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { useEffect, useState } from 'react'
 import {
   AlertCircle, AlertTriangle, CheckCircle2, MapPin, Users,
@@ -9,34 +8,12 @@ import type { ForecastRequest, ForecastResult, Metadata } from '../types'
 import EventMap from '../components/EventMap'
 import PageHeader from '../components/ui/PageHeader'
 import StatCard from '../components/ui/StatCard'
-=======
-import { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle2, MapPin, Users } from "lucide-react";
-import clsx from "clsx";
-import { api } from "../api";
-import type { ForecastRequest, ForecastResult, Metadata } from "../types";
-import EventMap from "../components/EventMap";
-import PageHeader from "../components/ui/PageHeader";
-import StatCard from "../components/ui/StatCard";
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
 
-const PLANNED_CAUSES = [
-  "public_event",
-  "construction",
-  "procession",
-  "vip_movement",
-  "protest",
-];
+const PLANNED_CAUSES = ['public_event', 'construction', 'procession', 'vip_movement', 'protest']
 const UNPLANNED_CAUSES = [
-  "vehicle_breakdown",
-  "accident",
-  "water_logging",
-  "tree_fall",
-  "pot_holes",
-  "congestion",
-  "road_conditions",
-  "others",
-];
+  'vehicle_breakdown', 'accident', 'water_logging', 'tree_fall',
+  'pot_holes', 'congestion', 'road_conditions', 'others',
+]
 
 const MAP_CENTER: [number, number] = [12.9716, 77.5946]
 
@@ -55,14 +32,13 @@ const emptyForm = {
 }
 
 const severityStyle: Record<string, string> = {
-  Critical: "bg-[rgba(248,113,113,0.12)] text-[var(--color-danger)]",
-  High: "bg-[rgba(251,146,60,0.12)] text-[var(--color-warning)]",
-  Moderate: "bg-[var(--color-accent-muted)] text-[var(--color-accent)]",
-  Low: "bg-[rgba(74,222,128,0.12)] text-[var(--color-success)]",
-};
+  Critical: 'bg-[rgba(248,113,113,0.12)] text-[var(--color-danger)]',
+  High: 'bg-[rgba(251,146,60,0.12)] text-[var(--color-warning)]',
+  Moderate: 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]',
+  Low: 'bg-[rgba(74,222,128,0.12)] text-[var(--color-success)]',
+}
 
 export default function EventPlanner() {
-<<<<<<< HEAD
   const [meta, setMeta] = useState<Metadata>({})
   const [form, setForm] = useState(emptyForm)
   const [result, setResult] = useState<ForecastResult | null>(null)
@@ -70,32 +46,12 @@ export default function EventPlanner() {
   const [whatIfResult, setWhatIfResult] = useState<ForecastResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-=======
-  const [meta, setMeta] = useState<Metadata>({});
-  const [form, setForm] = useState<ForecastRequest>({
-    event_type: "planned",
-    event_cause: "public_event",
-    corridor: "CBD 2",
-    zone: "Central Zone 2",
-    priority: "High",
-    latitude: 12.9788,
-    longitude: 77.5995,
-    hour: 18,
-    day_of_week: 6,
-    month: 3,
-    description: "",
-  });
-  const [result, setResult] = useState<ForecastResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
 
   useEffect(() => {
-    api.metadata().then(setMeta);
-  }, []);
+    api.metadata().then(setMeta)
+  }, [])
 
-  const causes =
-    form.event_type === "planned" ? PLANNED_CAUSES : UNPLANNED_CAUSES;
+  const causes = form.event_type === 'planned' ? PLANNED_CAUSES : UNPLANNED_CAUSES
 
   const lat = form.latitude ? parseFloat(form.latitude) : null
   const lng = form.longitude ? parseFloat(form.longitude) : null
@@ -143,7 +99,6 @@ export default function EventPlanner() {
   }, [whatIfHour, result])
 
   const handleSubmit = async (e: React.FormEvent) => {
-<<<<<<< HEAD
     e.preventDefault()
     setError('')
 
@@ -159,44 +114,16 @@ export default function EventPlanner() {
       setResult(res)
       setWhatIfHour(payload.hour)
       setWhatIfResult(null)
-=======
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const res = await api.forecast(form);
-      setResult(res);
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Forecast failed");
+      setError(err instanceof Error ? err.message : 'Forecast failed')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-<<<<<<< HEAD
   const update = (key: keyof typeof emptyForm, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
-=======
-  const update = (key: keyof ForecastRequest, value: string | number) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const formatDuration = (hours: number) => {
-    if (hours < 24) {
-      return `≈ ${Math.round(hours)} hrs`;
-    }
-
-    const days = Math.round(hours / 24);
-
-    if (days === 1) {
-      return "≈ 1 day";
-    }
-
-    return `≈ ${days} days`;
-  };
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
 
   return (
     <div className="px-4 py-8 sm:px-8">
@@ -206,23 +133,14 @@ export default function EventPlanner() {
       />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
-        <form
-          onSubmit={handleSubmit}
-          className="card space-y-4 p-6 xl:col-span-2"
-        >
-          <h3 className="text-sm font-semibold text-[var(--color-fg)]">
-            Event details
-          </h3>
+        <form onSubmit={handleSubmit} className="card space-y-4 p-6 xl:col-span-2">
+          <h3 className="text-sm font-semibold text-[var(--color-fg)]">Event details</h3>
 
           <div>
             <label className="label">Event type</label>
             <select
               value={form.event_type}
-<<<<<<< HEAD
               onChange={(e) => setForm({ ...form, event_type: e.target.value, event_cause: '' })}
-=======
-              onChange={(e) => update("event_type", e.target.value)}
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
               className="input"
             >
               <option value="planned">Planned</option>
@@ -234,14 +152,12 @@ export default function EventPlanner() {
             <label className="label">Cause</label>
             <select
               value={form.event_cause}
-              onChange={(e) => update("event_cause", e.target.value)}
+              onChange={(e) => update('event_cause', e.target.value)}
               className="input"
             >
               <option value="">Select cause</option>
               {causes.map((c) => (
-                <option key={c} value={c}>
-                  {c.replace(/_/g, " ")}
-                </option>
+                <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>
               ))}
             </select>
           </div>
@@ -251,38 +167,22 @@ export default function EventPlanner() {
               <label className="label">Corridor</label>
               <select
                 value={form.corridor}
-                onChange={(e) => update("corridor", e.target.value)}
+                onChange={(e) => update('corridor', e.target.value)}
                 className="input"
               >
-<<<<<<< HEAD
                 <option value="">Select corridor</option>
                 {(meta.corridors ?? []).map((c) => <option key={c} value={c}>{c}</option>)}
-=======
-                {(meta.corridors ?? []).map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
               </select>
             </div>
             <div>
               <label className="label">Zone</label>
               <select
                 value={form.zone}
-                onChange={(e) => update("zone", e.target.value)}
+                onChange={(e) => update('zone', e.target.value)}
                 className="input"
               >
-<<<<<<< HEAD
                 <option value="">Select zone</option>
                 {(meta.zones ?? []).map((z) => <option key={z} value={z}>{z}</option>)}
-=======
-                {(meta.zones ?? []).map((z) => (
-                  <option key={z} value={z}>
-                    {z}
-                  </option>
-                ))}
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
               </select>
             </div>
           </div>
@@ -295,12 +195,8 @@ export default function EventPlanner() {
                 min={0}
                 max={23}
                 value={form.hour}
-<<<<<<< HEAD
                 onChange={(e) => update('hour', e.target.value)}
                 placeholder="e.g. 18"
-=======
-                onChange={(e) => update("hour", +e.target.value)}
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
                 className="input"
               />
             </div>
@@ -311,7 +207,6 @@ export default function EventPlanner() {
                 min={0}
                 max={6}
                 value={form.day_of_week}
-<<<<<<< HEAD
                 onChange={(e) => update('day_of_week', e.target.value)}
                 placeholder="e.g. 5"
                 className="input"
@@ -329,9 +224,6 @@ export default function EventPlanner() {
                 value={form.month}
                 onChange={(e) => update('month', e.target.value)}
                 placeholder="e.g. 3"
-=======
-                onChange={(e) => update("day_of_week", +e.target.value)}
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
                 className="input"
               />
             </div>
@@ -339,7 +231,7 @@ export default function EventPlanner() {
               <label className="label">Priority</label>
               <select
                 value={form.priority}
-                onChange={(e) => update("priority", e.target.value)}
+                onChange={(e) => update('priority', e.target.value)}
                 className="input"
               >
                 <option value="">Select priority</option>
@@ -356,12 +248,8 @@ export default function EventPlanner() {
                 type="number"
                 step="0.0001"
                 value={form.latitude}
-<<<<<<< HEAD
                 onChange={(e) => update('latitude', e.target.value)}
                 placeholder="Click map to set"
-=======
-                onChange={(e) => update("latitude", +e.target.value)}
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
                 className="input font-mono text-xs"
               />
             </div>
@@ -371,12 +259,8 @@ export default function EventPlanner() {
                 type="number"
                 step="0.0001"
                 value={form.longitude}
-<<<<<<< HEAD
                 onChange={(e) => update('longitude', e.target.value)}
                 placeholder="Click map to set"
-=======
-                onChange={(e) => update("longitude", +e.target.value)}
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
                 className="input font-mono text-xs"
               />
             </div>
@@ -389,12 +273,8 @@ export default function EventPlanner() {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full"
-          >
-            {loading ? "Forecasting…" : "Generate forecast"}
+          <button type="submit" disabled={loading} className="btn-primary w-full">
+            {loading ? 'Forecasting…' : 'Generate forecast'}
           </button>
         </form>
 
@@ -421,7 +301,6 @@ export default function EventPlanner() {
                 onLocationPick={(pickLat, pickLng) => {
                   setForm((prev) => ({
                     ...prev,
-<<<<<<< HEAD
                     latitude: String(Math.round(pickLat * 1e6) / 1e6),
                     longitude: String(Math.round(pickLng * 1e6) / 1e6),
                   }))
@@ -436,30 +315,6 @@ export default function EventPlanner() {
                 barricadePoints={result?.recommendations.barricading.points.map((p) => ({
                   lat: p.lat, lng: p.lng, label: p.label,
                 }))}
-=======
-                    latitude: Math.round(lat * 1e6) / 1e6,
-                    longitude: Math.round(lng * 1e6) / 1e6,
-                  }));
-                }}
-                eventPin={{
-                  lat: form.latitude,
-                  lng: form.longitude,
-                  label: "Event location",
-                }}
-                highlightCenter={
-                  result ? [form.latitude, form.longitude] : undefined
-                }
-                impactRadiusKm={
-                  result?.recommendations.estimated_impact_radius_km
-                }
-                barricadePoints={result?.recommendations.barricading.points.map(
-                  (p) => ({
-                    lat: p.lat,
-                    lng: p.lng,
-                    label: p.label,
-                  }),
-                )}
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
               />
             </div>
           </div>
@@ -488,12 +343,7 @@ export default function EventPlanner() {
                       : result.congestion_score
                   }
                   hint={
-                    <span
-                      className={clsx(
-                        "badge",
-                        severityStyle[result.severity_label],
-                      )}
-                    >
+                    <span className={clsx('badge', severityStyle[result.severity_label])}>
                       {result.severity_label}
                       {result.congestion_score_ci && (
                         <span className="ml-1 font-normal normal-case opacity-80">
@@ -504,20 +354,14 @@ export default function EventPlanner() {
                   }
                   trend="warning"
                 />
-
                 <StatCard
                   label="Duration"
-<<<<<<< HEAD
                   value={
                     result.duration_hours_ci
                       ? `${result.duration_hours_ci.low}–${result.duration_hours_ci.high}h`
                       : `${result.estimated_duration_hours}h`
                   }
                   hint={`Median est. ${result.estimated_duration_hours}h`}
-=======
-                  value={formatDuration(result.estimated_duration_hours)}
-                  hint="Estimated resolution"
->>>>>>> 38c1597e4c8d1087bb2f0d88d20e5a83a4310168
                 />
                 <StatCard
                   label="Closure prob."
@@ -625,32 +469,24 @@ export default function EventPlanner() {
                       <span>Road closure</span>
                       <span
                         className={clsx(
-                          "font-medium",
-                          result.recommendations.barricading
-                            .road_closure_recommended
-                            ? "text-[var(--color-danger)]"
-                            : "text-[var(--color-success)]",
+                          'font-medium',
+                          result.recommendations.barricading.road_closure_recommended
+                            ? 'text-[var(--color-danger)]'
+                            : 'text-[var(--color-success)]',
                         )}
                       >
-                        {result.recommendations.barricading
-                          .road_closure_recommended
-                          ? "Yes"
-                          : "No"}
+                        {result.recommendations.barricading.road_closure_recommended ? 'Yes' : 'No'}
                       </span>
                     </li>
                   </ul>
                 </div>
 
                 <div className="card p-5">
-                  <h4 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
-                    Diversion routes
-                  </h4>
+                  <h4 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Diversion routes</h4>
                   <ul className="space-y-3">
                     {result.recommendations.diversions.map((d) => (
                       <li key={d.route_id} className="text-sm">
-                        <span className="font-medium text-[var(--color-accent)]">
-                          {d.corridor}
-                        </span>
+                        <span className="font-medium text-[var(--color-accent)]">{d.corridor}</span>
                         <p className="mt-0.5 text-xs leading-relaxed text-[var(--color-subtle)]">
                           +{d.estimated_delay_minutes} min · {d.description}
                         </p>
@@ -667,10 +503,7 @@ export default function EventPlanner() {
                 </h4>
                 <ul className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
                   {result.recommendations.action_checklist.map((item, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2.5 text-sm text-[var(--color-muted)]"
-                    >
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-[var(--color-muted)]">
                       <span className="mt-1 h-3.5 w-3.5 shrink-0 rounded border border-[var(--color-border-strong)]" />
                       {item}
                     </li>
@@ -682,5 +515,5 @@ export default function EventPlanner() {
         </div>
       </div>
     </div>
-  );
+  )
 }
