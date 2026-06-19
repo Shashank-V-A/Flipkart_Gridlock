@@ -1455,13 +1455,6 @@
       "lat": 13.094322,
       "lng": 77.595927
     },
-    "SilkBoardJunc": {
-      "event_count": 33,
-      "avg_score": 5.97,
-      "closure_rate": 0.121,
-      "lat": 12.917013,
-      "lng": 77.622874
-    },
     "toll gate mysore road": {
       "event_count": 33,
       "avg_score": 5.53,
@@ -1469,12 +1462,12 @@
       "lat": 12.957494,
       "lng": 77.551884
     },
-    "Nagavara-ORR Junction": {
-      "event_count": 32,
-      "avg_score": 5.98,
-      "closure_rate": 0.062,
-      "lat": 13.0396,
-      "lng": 77.62419
+    "SilkBoardJunc": {
+      "event_count": 33,
+      "avg_score": 5.97,
+      "closure_rate": 0.121,
+      "lat": 12.917013,
+      "lng": 77.622874
     },
     "JalahalliCross(SM Circle)": {
       "event_count": 32,
@@ -1483,12 +1476,12 @@
       "lat": 13.040089,
       "lng": 77.518302
     },
-    "K R Circle": {
-      "event_count": 31,
-      "avg_score": 5.02,
-      "closure_rate": 0.29,
-      "lat": 12.976696,
-      "lng": 77.586048
+    "Nagavara-ORR Junction": {
+      "event_count": 32,
+      "avg_score": 5.98,
+      "closure_rate": 0.062,
+      "lat": 13.0396,
+      "lng": 77.62419
     },
     "KIMCO Junction": {
       "event_count": 31,
@@ -1497,6 +1490,13 @@
       "lat": 12.95114,
       "lng": 77.538003
     },
+    "K R Circle": {
+      "event_count": 31,
+      "avg_score": 5.02,
+      "closure_rate": 0.29,
+      "lat": 12.976696,
+      "lng": 77.586048
+    },
     "VeerannapalyaJunction(BEL,HO)": {
       "event_count": 30,
       "avg_score": 7.83,
@@ -1504,19 +1504,19 @@
       "lat": 13.041578,
       "lng": 77.61366
     },
-    "Devasandra(k r puram)": {
-      "event_count": 30,
-      "avg_score": 4.4,
-      "closure_rate": 0.133,
-      "lat": 13.009463,
-      "lng": 77.696157
-    },
     "TownhallJunction": {
       "event_count": 30,
       "avg_score": 5.6,
       "closure_rate": 0.067,
       "lat": 12.963982,
       "lng": 77.584377
+    },
+    "Devasandra(k r puram)": {
+      "event_count": 30,
+      "avg_score": 4.4,
+      "closure_rate": 0.133,
+      "lat": 13.009463,
+      "lng": 77.696157
     },
     "HesaraghattaJunction": {
       "event_count": 30,
@@ -1553,6 +1553,13 @@
       "lat": 13.122026,
       "lng": 77.610863
     },
+    "PoliceCornerJunc": {
+      "event_count": 26,
+      "avg_score": 5.94,
+      "closure_rate": 0.154,
+      "lat": 12.968715,
+      "lng": 77.587036
+    },
     "Bommanahalli": {
       "event_count": 26,
       "avg_score": 5.58,
@@ -1567,12 +1574,12 @@
       "lat": 12.991387,
       "lng": 77.657421
     },
-    "PoliceCornerJunc": {
-      "event_count": 26,
-      "avg_score": 5.94,
-      "closure_rate": 0.154,
-      "lat": 12.968715,
-      "lng": 77.587036
+    "BEL Circle": {
+      "event_count": 25,
+      "avg_score": 5.92,
+      "closure_rate": 0.08,
+      "lat": 13.044357,
+      "lng": 77.555854
     },
     "SantheCircle": {
       "event_count": 25,
@@ -1580,13 +1587,6 @@
       "closure_rate": 0.2,
       "lat": 13.09747,
       "lng": 77.598195
-    },
-    "BEL Circle": {
-      "event_count": 25,
-      "avg_score": 5.92,
-      "closure_rate": 0.08,
-      "lat": 13.044357,
-      "lng": 77.555854
     },
     "KhodaysCircle(DV UrsCircle)": {
       "event_count": 23,
