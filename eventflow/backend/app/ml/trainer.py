@@ -25,7 +25,11 @@ def build_preprocessor() -> ColumnTransformer:
     num_features = ["hour", "day_of_week", "month", "is_weekend", "is_peak_hour"]
     return ColumnTransformer(
         transformers=[
-            ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_features),
+            (
+                "cat",
+                OneHotEncoder(handle_unknown="ignore", sparse_output=False),
+                cat_features,
+            ),
             ("num", "passthrough", num_features),
         ]
     )
@@ -54,24 +58,43 @@ def train_models() -> dict:
 
     preprocessor = build_preprocessor()
 
-    score_model = Pipeline([
-        ("prep", preprocessor),
-        ("reg", GradientBoostingRegressor(n_estimators=150, max_depth=5, random_state=42)),
-    ])
+    score_model = Pipeline(
+        [
+            ("prep", preprocessor),
+            (
+                "reg",
+                GradientBoostingRegressor(
+                    n_estimators=150, max_depth=5, random_state=42
+                ),
+            ),
+        ]
+    )
     score_model.fit(X_train, ys_train)
     score_pred = score_model.predict(X_test)
 
-    duration_model = Pipeline([
-        ("prep", build_preprocessor()),
-        ("reg", GradientBoostingRegressor(n_estimators=150, max_depth=5, random_state=42)),
-    ])
+    duration_model = Pipeline(
+        [
+            ("prep", build_preprocessor()),
+            (
+                "reg",
+                GradientBoostingRegressor(
+                    n_estimators=150, max_depth=5, random_state=42
+                ),
+            ),
+        ]
+    )
     duration_model.fit(X_train, yd_train)
     duration_pred = duration_model.predict(X_test)
 
-    closure_model = Pipeline([
-        ("prep", build_preprocessor()),
-        ("clf", RandomForestClassifier(n_estimators=100, max_depth=8, random_state=42)),
-    ])
+    closure_model = Pipeline(
+        [
+            ("prep", build_preprocessor()),
+            (
+                "clf",
+                RandomForestClassifier(n_estimators=100, max_depth=8, random_state=42),
+            ),
+        ]
+    )
     closure_model.fit(X_train, yc_train)
     closure_acc = closure_model.score(X_test, yc_test)
 
@@ -112,12 +135,16 @@ def build_recommendation_stats(df: pd.DataFrame) -> dict:
             "count": int(len(subset)),
         }
 
-    grouped = df.groupby(["event_cause", "corridor"]).agg(
-        avg_duration=("duration_hours", "median"),
-        closure_rate=("requires_closure_int", "mean"),
-        avg_score=("congestion_score", "mean"),
-        count=("id", "count"),
-    ).reset_index()
+    grouped = (
+        df.groupby(["event_cause", "corridor"])
+        .agg(
+            avg_duration=("duration_hours", "median"),
+            closure_rate=("requires_closure_int", "mean"),
+            avg_score=("congestion_score", "mean"),
+            count=("id", "count"),
+        )
+        .reset_index()
+    )
 
     for _, row in grouped.iterrows():
         key = f"{row['event_cause']}|{row['corridor']}"
