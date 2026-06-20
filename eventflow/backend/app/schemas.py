@@ -22,6 +22,14 @@ class FeedbackRequest(BaseModel):
     predicted_duration_hours: float
     actual_duration_hours: float
     notes: str | None = None
+    event_type: str | None = None
+    event_cause: str | None = None
+    corridor: str | None = None
+    zone: str | None = None
+    priority: str | None = None
+    hour: int | None = None
+    day_of_week: int | None = None
+    month: int | None = None
 
 
 class ChatMessage(BaseModel):

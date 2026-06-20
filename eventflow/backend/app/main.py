@@ -169,6 +169,8 @@ def learning_insights():
 @app.post("/api/learning/retrain")
 def learning_retrain():
     try:
-        return analytics.retrain_from_feedback()
+        result = analytics.retrain_from_feedback()
+        predictor.reload()
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

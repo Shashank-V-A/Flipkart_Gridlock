@@ -114,6 +114,7 @@ export interface ForecastResult {
   closure_probability: number
   peak_hour_warning?: { peak_hour_overlap: boolean; message: string | null }
   calibration_applied?: boolean
+  score_drivers?: Array<{ feature: string; value: string; contribution: string }>
   recommendations: {
     manpower: {
       total_officers: number

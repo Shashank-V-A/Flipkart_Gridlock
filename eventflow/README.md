@@ -111,3 +111,29 @@ Without a key, the agent still works using template-based replies.
 ## Test scenarios
 
 See `TEST_EVENTS.txt` for five demo scenarios (cricket match, rally, construction, bus breakdown, tree fall).
+
+## Production deployment (Vercel)
+
+**Live:** [https://namma-trust.vercel.app](https://namma-trust.vercel.app)
+
+Deploy from the `eventflow` folder:
+
+```bash
+cd eventflow
+vercel deploy --prod --yes --functions-beta
+```
+
+Required Vercel env vars: `VITE_GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `JWT_SECRET`, `OPENROUTER_API_KEY` (optional), `FRONTEND_URL=https://namma-trust.vercel.app`.
+
+The Astram dataset ships as `backend/data/events.csv`. Google OAuth must include `https://namma-trust.vercel.app` as an authorized origin.
+
+### GitHub auto-deploy
+
+Add repository secret `VERCEL_TOKEN`. Pushes to `main` run tests and deploy via `.github/workflows/vercel-deploy.yml`.
+
+### API tests
+
+```bash
+cd eventflow/backend
+pytest tests/test_api.py -q
+```

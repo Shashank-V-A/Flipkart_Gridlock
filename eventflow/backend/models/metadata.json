@@ -1,10 +1,11 @@
 {
   "samples": 3548,
-  "score_mae": 0.288,
-  "score_r2": 0.901,
-  "duration_mae_hours": 67.93,
-  "duration_r2": 0.37,
+  "score_mae": 0.286,
+  "score_r2": 0.902,
+  "duration_mae_hours": 56.02,
+  "duration_r2": 0.181,
   "closure_accuracy": 0.903,
+  "duration_log_transform": true,
   "corridors": [
     "Airport New South Road",
     "Bannerghata Road",

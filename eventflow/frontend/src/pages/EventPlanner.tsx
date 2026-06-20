@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  AlertCircle, AlertTriangle, CheckCircle2, MapPin, Users,
+  AlertCircle, AlertTriangle, CheckCircle2, MapPin, Printer, Users, Zap,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { api } from '../api'
@@ -8,6 +8,7 @@ import type { ForecastRequest, ForecastResult, Metadata } from '../types'
 import EventMap from '../components/EventMap'
 import PageHeader from '../components/ui/PageHeader'
 import StatCard from '../components/ui/StatCard'
+import { PLANNER_DEMO_SCENARIOS, printDeploymentBrief } from '../lib/deploymentBrief'
 
 const PLANNED_CAUSES = ['public_event', 'construction', 'procession', 'vip_movement', 'protest']
 const UNPLANNED_CAUSES = [
@@ -131,6 +132,23 @@ export default function EventPlanner() {
         title="Event Planner"
         description="Forecast congestion impact and get manpower, barricading, and diversion recommendations"
       />
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        {PLANNER_DEMO_SCENARIOS.map((demo) => (
+          <button
+            key={demo.label}
+            type="button"
+            className="btn-ghost text-xs"
+            onClick={() => {
+              setForm({ ...demo.form })
+              setResult(null)
+              setError('')
+            }}
+          >
+            Demo: {demo.label}
+          </button>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
         <form onSubmit={handleSubmit} className="card space-y-4 p-6 xl:col-span-2">
@@ -325,6 +343,18 @@ export default function EventPlanner() {
             </div>
           ) : (
             <>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-[var(--color-fg)]">Deployment plan</p>
+                <button
+                  type="button"
+                  className="btn-ghost inline-flex items-center gap-2 text-xs"
+                  onClick={() => printDeploymentBrief(form, result)}
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Print brief
+                </button>
+              </div>
+
               {result.peak_hour_warning?.peak_hour_overlap && (
                 <div className="flex gap-3 rounded-xl border border-[rgba(251,146,60,0.25)] bg-[rgba(251,146,60,0.08)] p-4">
                   <AlertTriangle className="h-5 w-5 shrink-0 text-[var(--color-warning)]" />
@@ -379,6 +409,24 @@ export default function EventPlanner() {
                   trend="success"
                 />
               </div>
+
+              {result.score_drivers && result.score_drivers.length > 0 && (
+                <div className="card p-5">
+                  <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--color-fg)]">
+                    <Zap className="h-4 w-4 text-[var(--color-accent)]" />
+                    Key forecast drivers
+                  </h4>
+                  <ul className="space-y-3">
+                    {result.score_drivers.map((driver) => (
+                      <li key={`${driver.feature}-${driver.value}`} className="text-sm">
+                        <span className="font-medium text-[var(--color-fg)]">{driver.feature}</span>
+                        <span className="text-[var(--color-muted)]"> · {driver.value}</span>
+                        <p className="mt-0.5 text-xs text-[var(--color-subtle)]">{driver.contribution}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {whatIfHour !== null && (
                 <div className="card p-5">

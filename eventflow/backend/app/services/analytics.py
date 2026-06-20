@@ -445,15 +445,29 @@ class AnalyticsService:
 
     def retrain_from_feedback(self) -> dict:
         from .calibration_service import apply_calibration_from_feedback
+        from ..ml.trainer import retrain_from_feedback as ml_retrain
 
         if not self._feedback:
             raise ValueError("Log at least one post-event outcome before retraining")
 
-        result = apply_calibration_from_feedback(self._feedback)
+        cal_result = apply_calibration_from_feedback(self._feedback)
+        ml_result = None
+
+        if len(self._feedback) >= 3 and not self.dataset_missing:
+            try:
+                ml_result = ml_retrain(self._feedback)
+            except Exception as exc:
+                ml_result = {"error": str(exc)}
+
         return {
-            "status": "calibrated",
-            "message": "Models calibrated from post-event feedback",
-            **result,
+            "status": "retrained" if ml_result and "error" not in ml_result else "calibrated",
+            "message": (
+                "Models retrained from feedback and calibration applied"
+                if ml_result and "error" not in ml_result
+                else "Calibration applied from feedback"
+            ),
+            "calibration": cal_result,
+            "model_metrics": ml_result,
         }
 
     def get_impact_metrics(self) -> dict:

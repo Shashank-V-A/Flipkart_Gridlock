@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '../context/AuthContext'
+import { useApiWarmup } from '../context/ApiWarmupContext'
 
 const nav = [
   { to: '/agent', label: 'Agent', icon: Bot, desc: 'Natural language' },
@@ -49,7 +50,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-0.5 px-3">
+      <nav className="flex-1 space-y-0.5 px-3 pb-2">
         {nav.map(({ to, label, icon: Icon, desc }) => (
           <NavLink
             key={to}
@@ -58,7 +59,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             className={({ isActive }) =>
               clsx(
-                'group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all',
+                'group flex min-h-[44px] items-center gap-3 rounded-xl px-3 py-2.5 transition-all',
                 isActive
                   ? 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
                   : 'text-[var(--color-muted)] hover:bg-[rgba(42,40,24,0.04)] hover:text-[var(--color-fg)]',
@@ -83,7 +84,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
 
-      <div className="border-t border-[var(--color-border)] p-4">
+      <div className="border-t border-[var(--color-border)] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         {user && (
           <div className="flex items-center gap-2.5 rounded-xl bg-[var(--color-card)] px-3 py-2.5">
             {user.picture ? (
@@ -100,7 +101,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <button
               type="button"
               onClick={handleLogout}
-              className="shrink-0 rounded-lg p-1.5 text-[var(--color-subtle)] transition-colors hover:bg-[rgba(42,40,24,0.05)] hover:text-[var(--color-fg)]"
+              className="shrink-0 rounded-lg p-2 text-[var(--color-subtle)] transition-colors hover:bg-[rgba(42,40,24,0.05)] hover:text-[var(--color-fg)]"
               title="Sign out"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -115,6 +116,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 export default function Layout() {
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { warming, slowStart, error, retryWarmup } = useApiWarmup()
 
   return (
     <div className="app-bg flex min-h-screen">
@@ -130,11 +132,12 @@ export default function Layout() {
             onClick={() => setMobileOpen(false)}
             aria-label="Close menu"
           />
-          <aside className="relative flex h-full w-[260px] flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl">
+          <aside className="relative flex h-full w-[min(280px,85vw)] flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl">
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
               className="absolute right-3 top-4 rounded-lg p-2 text-[var(--color-muted)]"
+              aria-label="Close navigation"
             >
               <X className="h-5 w-5" />
             </button>
@@ -144,6 +147,26 @@ export default function Layout() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
+        {(warming || error || slowStart) && (
+          <div
+            className={clsx(
+              'shrink-0 border-b px-4 py-2 text-center text-xs sm:px-8',
+              error
+                ? 'border-[rgba(220,38,38,0.2)] bg-[rgba(220,38,38,0.06)] text-[var(--color-danger)]'
+                : 'border-[var(--color-border)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]',
+            )}
+          >
+            {warming && 'Warming up models… first request may take 15–30 seconds on cold start.'}
+            {!warming && error && (
+              <span>
+                API unreachable.{' '}
+                <button type="button" className="underline" onClick={retryWarmup}>Retry</button>
+              </span>
+            )}
+            {!warming && !error && slowStart && 'Models loaded — subsequent requests will be faster.'}
+          </div>
+        )}
+
         <div className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--color-border)] px-4 sm:px-8">
           <button
             type="button"
@@ -153,11 +176,11 @@ export default function Layout() {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <p className="text-xs font-medium text-[var(--color-subtle)]">
+          <p className="truncate text-xs font-medium text-[var(--color-subtle)]">
             {pageTitles[location.pathname] ?? 'Namma Trust'}
           </p>
         </div>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto pb-[env(safe-area-inset-bottom)]">
           <Outlet />
         </main>
       </div>

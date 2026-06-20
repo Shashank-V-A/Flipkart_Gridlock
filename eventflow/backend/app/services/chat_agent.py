@@ -292,6 +292,18 @@ class ChatAgent:
         )
         checklist = "\n".join(f"  ☑ {item}" for item in rec["action_checklist"][:4])
 
+        peak_note = ""
+        peak = forecast.get("peak_hour_warning") or {}
+        if peak.get("peak_hour_overlap") and peak.get("message"):
+            peak_note = f"\n\n⚠️ **Peak hour alert:** {peak['message']}"
+
+        drivers = forecast.get("score_drivers") or []
+        driver_lines = "\n".join(
+            f"  • **{d['feature']}** ({d['value']}) — {d['contribution']}"
+            for d in drivers[:3]
+        )
+        driver_note = f"\n\n### 🔍 Key drivers\n{driver_lines}" if driver_lines else ""
+
         hist = rec.get("historical_reference") or {}
         hist_note = ""
         if hist.get("count"):
@@ -314,6 +326,8 @@ class ChatAgent:
             f"• Road closure: **{'Recommended' if bar['road_closure_recommended'] else 'Not required'}**\n\n"
             f"### 🔀 Diversion Routes\n{div_lines}\n\n"
             f"### ✅ Action Checklist\n{checklist}"
+            f"{driver_note}"
+            f"{peak_note}"
             f"{hist_note}\n\n"
             f"_Open **Event Planner** to see barricade points on the map._"
         )
