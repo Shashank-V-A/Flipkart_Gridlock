@@ -11,6 +11,39 @@ RAIN_SENSITIVE_CAUSES = frozenset(
 )
 
 
+def _safe_int(value, default: int = 0) -> int:
+    try:
+        if pd.isna(value):
+            return default
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_float(value, default: float = 0.0) -> float:
+    try:
+        if pd.isna(value):
+            return default
+        num = float(value)
+        if math.isnan(num) or math.isinf(num):
+            return default
+        return num
+    except (TypeError, ValueError):
+        return default
+
+
+def _derive_hour(row) -> int:
+    if pd.notna(row.get("hour")):
+        return _safe_int(row["hour"], default=-1)
+    start = row.get("start_datetime")
+    if pd.notna(start):
+        try:
+            return int(pd.Timestamp(start).hour)
+        except (TypeError, ValueError):
+            pass
+    return -1
+
+
 def detect_conflicts(df: pd.DataFrame, payload: dict) -> dict:
     corridor = payload.get("corridor", "Non-corridor")
     zone = payload.get("zone", "Unknown")
@@ -57,22 +90,24 @@ def detect_conflicts(df: pd.DataFrame, payload: dict) -> dict:
         {
             "id": str(row.get("id", "")),
             "cause": row["event_cause"],
-            "hour": int(row["hour"]),
-            "congestion_score": round(float(row["congestion_score"]), 1),
-            "duration_hours": round(float(row["duration_hours"]), 1),
-            "requires_closure": bool(row["requires_closure_int"]),
+            "hour": _derive_hour(row),
+            "congestion_score": round(_safe_float(row["congestion_score"]), 1),
+            "duration_hours": round(_safe_float(row["duration_hours"], 1.0), 1),
+            "requires_closure": bool(_safe_int(row.get("requires_closure_int", 0))),
         }
         for _, row in overlaps.iterrows()
+        if _derive_hour(row) >= 0
     ]
 
     zone_events = [
         {
             "corridor": row["corridor"],
             "cause": row["event_cause"],
-            "hour": int(row["hour"]),
-            "congestion_score": round(float(row["congestion_score"]), 1),
+            "hour": _derive_hour(row),
+            "congestion_score": round(_safe_float(row["congestion_score"]), 1),
         }
         for _, row in zone_stress.iterrows()
+        if _derive_hour(row) >= 0
     ]
 
     count = len(corridor_overlaps) + len(zone_events)
@@ -114,20 +149,27 @@ def find_similar_events(df: pd.DataFrame, payload: dict, limit: int = 5) -> list
     if corridor != "Non-corridor" and len(subset[subset["corridor"] == corridor]) >= 3:
         subset = subset[subset["corridor"] == corridor].copy()
 
-    subset["hour_dist"] = (subset["hour"] - hour).abs()
+    subset["_derived_hour"] = subset.apply(_derive_hour, axis=1)
+    subset = subset[subset["_derived_hour"] >= 0].copy()
+    if subset.empty:
+        return []
+
+    subset["hour_dist"] = (subset["_derived_hour"] - hour).abs()
     subset = subset.sort_values(["hour_dist", "congestion_score"], ascending=[True, False])
 
     results = []
-    for _, row in subset.head(limit).iterrows():
+    for _, row in subset.iterrows():
+        if len(results) >= limit:
+            break
         results.append({
             "id": str(row.get("id", "")),
             "event_type": row.get("event_type", ""),
             "cause": row["event_cause"],
             "corridor": row["corridor"],
-            "hour": int(row["hour"]),
-            "congestion_score": round(float(row["congestion_score"]), 1),
-            "duration_hours": round(float(row["duration_hours"]), 1),
-            "requires_closure": bool(row["requires_closure_int"]),
+            "hour": int(row["_derived_hour"]),
+            "congestion_score": round(_safe_float(row["congestion_score"]), 1),
+            "duration_hours": round(_safe_float(row["duration_hours"], 1.0), 1),
+            "requires_closure": bool(_safe_int(row.get("requires_closure_int", 0))),
             "address": str(row["address"]) if pd.notna(row.get("address")) else "",
             "junction": str(row["junction"]) if pd.notna(row.get("junction")) else None,
         })

@@ -54,12 +54,12 @@ async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     let message = `Request failed: ${res.status}`
+    const text = await res.text()
     try {
-      const body = await res.json()
+      const body = JSON.parse(text) as { detail?: string }
       if (body.detail) message = typeof body.detail === 'string' ? body.detail : message
     } catch {
-      const err = await res.text()
-      if (err) message = err
+      if (text) message = text.slice(0, 300)
     }
     throw new Error(message)
   }
