@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
-  AlertCircle, AlertTriangle, CheckCircle2, MapPin, Printer, Users, Zap,
+  AlertCircle, AlertTriangle, CheckCircle2, CloudRain, Columns2, Download, History,
+  MapPin, Printer, Radar, Timer, Users, Zap,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { api } from '../api'
@@ -9,6 +10,7 @@ import EventMap from '../components/EventMap'
 import PageHeader from '../components/ui/PageHeader'
 import StatCard from '../components/ui/StatCard'
 import { PLANNER_DEMO_SCENARIOS, printDeploymentBrief } from '../lib/deploymentBrief'
+import { downloadAnalysisPdf } from '../lib/downloadAnalysisPdf'
 
 const PLANNED_CAUSES = ['public_event', 'construction', 'procession', 'vip_movement', 'protest']
 const UNPLANNED_CAUSES = [
@@ -44,7 +46,7 @@ export default function EventPlanner() {
   const [form, setForm] = useState(emptyForm)
   const [result, setResult] = useState<ForecastResult | null>(null)
   const [whatIfHour, setWhatIfHour] = useState<number | null>(null)
-  const [whatIfResult, setWhatIfResult] = useState<ForecastResult | null>(null)
+  const [compareLoading, setCompareLoading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -58,7 +60,7 @@ export default function EventPlanner() {
   const lng = form.longitude ? parseFloat(form.longitude) : null
   const hasLocation = lat !== null && lng !== null && !Number.isNaN(lat) && !Number.isNaN(lng)
 
-  const buildPayload = (hourOverride?: number): ForecastRequest | null => {
+  const buildPayload = (hourOverride?: number, compareHour?: number | null): ForecastRequest | null => {
     const hour = hourOverride ?? parseInt(form.hour, 10)
     const day_of_week = parseInt(form.day_of_week, 10)
     const month = parseInt(form.month, 10)
@@ -69,7 +71,7 @@ export default function EventPlanner() {
     ) {
       return null
     }
-    return {
+    const payload: ForecastRequest = {
       event_type: form.event_type,
       event_cause: form.event_cause,
       corridor: form.corridor,
@@ -82,22 +84,38 @@ export default function EventPlanner() {
       month,
       description: form.description || undefined,
     }
+    if (compareHour != null && compareHour !== hour) {
+      payload.compare_hour = compareHour
+    }
+    return payload
+  }
+
+  const fetchForecast = async (compareHour?: number | null) => {
+    const payload = buildPayload(undefined, compareHour)
+    if (!payload) return null
+    return api.forecast(payload)
   }
 
   useEffect(() => {
     if (!result || whatIfHour === null) return
     const baseHour = parseInt(form.hour, 10)
     if (whatIfHour === baseHour) {
-      setWhatIfResult(null)
+      if (result.plan_comparison) {
+        fetchForecast(null).then((res) => res && setResult(res)).catch(() => {})
+      }
       return
     }
-    const payload = buildPayload(whatIfHour)
+    const payload = buildPayload(undefined, whatIfHour)
     if (!payload) return
     const timer = setTimeout(() => {
-      api.forecast(payload).then(setWhatIfResult).catch(() => setWhatIfResult(null))
+      setCompareLoading(true)
+      api.forecast(payload)
+        .then(setResult)
+        .catch(() => {})
+        .finally(() => setCompareLoading(false))
     }, 400)
     return () => clearTimeout(timer)
-  }, [whatIfHour, result])
+  }, [whatIfHour])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -111,10 +129,11 @@ export default function EventPlanner() {
 
     setLoading(true)
     try {
-      const res = await api.forecast(payload)
-      setResult(res)
-      setWhatIfHour(payload.hour)
-      setWhatIfResult(null)
+      const res = await fetchForecast(null)
+      if (res) {
+        setResult(res)
+        setWhatIfHour(parseInt(form.hour, 10))
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Forecast failed')
     } finally {
@@ -345,15 +364,48 @@ export default function EventPlanner() {
             <>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-[var(--color-fg)]">Deployment plan</p>
-                <button
-                  type="button"
-                  className="btn-ghost inline-flex items-center gap-2 text-xs"
-                  onClick={() => printDeploymentBrief(form, result)}
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                  Print brief
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="btn-ghost inline-flex items-center gap-2 text-xs"
+                    onClick={() => downloadAnalysisPdf(form, result)}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Download PDF
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-ghost inline-flex items-center gap-2 text-xs"
+                    onClick={() => printDeploymentBrief(form, result)}
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    Print brief
+                  </button>
+                </div>
               </div>
+
+              {result.weather?.message && (
+                <div className={clsx(
+                  'flex gap-3 rounded-xl border p-4',
+                  result.weather.is_raining
+                    ? 'border-[rgba(96,165,250,0.25)] bg-[rgba(96,165,250,0.08)]'
+                    : 'border-[var(--color-border)] bg-[var(--color-surface)]',
+                )}>
+                  <CloudRain className={clsx(
+                    'h-5 w-5 shrink-0',
+                    result.weather.is_raining ? 'text-blue-400' : 'text-[var(--color-muted)]',
+                  )} />
+                  <div className="text-sm leading-relaxed text-[var(--color-muted)]">
+                    <p className="font-medium text-[var(--color-fg)]">Weather-aware risk</p>
+                    <p className="mt-0.5">{result.weather.message}</p>
+                    {result.weather.score_adjustment > 0 && (
+                      <p className="mt-1 text-xs text-[var(--color-subtle)]">
+                        Congestion score adjusted +{result.weather.score_adjustment} for current conditions
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {result.peak_hour_warning?.peak_hour_overlap && (
                 <div className="flex gap-3 rounded-xl border border-[rgba(251,146,60,0.25)] bg-[rgba(251,146,60,0.08)] p-4">
@@ -410,6 +462,145 @@ export default function EventPlanner() {
                 />
               </div>
 
+              {result.citizen_impact && (
+                <div className="card p-5">
+                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--color-fg)]">
+                    <Users className="h-4 w-4 text-[var(--color-accent)]" />
+                    Citizen impact estimate
+                  </h4>
+                  <p className="text-sm text-[var(--color-muted)]">{result.citizen_impact.summary}</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-[var(--color-subtle)]">Vehicles affected</p>
+                      <p className="font-mono text-lg font-semibold text-[var(--color-fg)]">
+                        {result.citizen_impact.estimated_vehicles_affected.toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-[var(--color-subtle)]">Avg delay</p>
+                      <p className="font-mono text-lg font-semibold text-[var(--color-fg)]">
+                        {result.citizen_impact.avg_delay_minutes} min
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-[var(--color-subtle)]">Delay vehicle-hrs</p>
+                      <p className="font-mono text-lg font-semibold text-[var(--color-fg)]">
+                        {result.citizen_impact.total_delay_vehicle_hours.toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-[var(--color-subtle)]">Impact radius</p>
+                      <p className="font-mono text-lg font-semibold text-[var(--color-fg)]">
+                        {result.citizen_impact.impact_radius_km} km
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {result.conflict_radar && (
+                <div className={clsx(
+                  'card p-5',
+                  result.conflict_radar.has_conflict && 'border-[rgba(251,146,60,0.3)]',
+                )}>
+                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--color-fg)]">
+                    <Radar className="h-4 w-4 text-[var(--color-accent)]" />
+                    Multi-event conflict radar
+                    {result.conflict_radar.has_conflict && (
+                      <span className="badge bg-[rgba(251,146,60,0.12)] text-[var(--color-warning)]">
+                        {result.conflict_radar.compound_risk_pct}% compound risk
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-sm text-[var(--color-muted)]">{result.conflict_radar.message}</p>
+                  {result.conflict_radar.corridor_overlaps.length > 0 && (
+                    <div className="mt-4">
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--color-subtle)]">
+                        Corridor overlaps
+                      </p>
+                      <ul className="space-y-2">
+                        {result.conflict_radar.corridor_overlaps.slice(0, 5).map((e) => (
+                          <li key={e.id || `${e.cause}-${e.hour}`} className="flex justify-between text-sm">
+                            <span className="text-[var(--color-muted)]">
+                              {e.cause.replace(/_/g, ' ')} @ {e.hour}:00
+                            </span>
+                            <span className="font-mono text-[var(--color-fg)]">
+                              score {e.congestion_score} · {e.duration_hours}h
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {result.conflict_radar.adjacent_corridor_alerts.length > 0 && (
+                    <div className="mt-4">
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--color-subtle)]">
+                        Adjacent corridor stress
+                      </p>
+                      <ul className="space-y-2">
+                        {result.conflict_radar.adjacent_corridor_alerts.map((a) => (
+                          <li key={a.corridor} className="flex justify-between text-sm text-[var(--color-muted)]">
+                            <span>{a.corridor}</span>
+                            <span className="font-mono">{a.event_count} events · avg {a.avg_score}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {result.similar_events && result.similar_events.length > 0 && (
+                <div className="card p-5">
+                  <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--color-fg)]">
+                    <History className="h-4 w-4 text-[var(--color-accent)]" />
+                    Similar past events
+                  </h4>
+                  <ul className="space-y-3">
+                    {result.similar_events.map((e) => (
+                      <li
+                        key={e.id || `${e.corridor}-${e.hour}-${e.cause}`}
+                        className="rounded-xl border border-[var(--color-border)] p-3 text-sm"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-medium text-[var(--color-fg)]">
+                            {e.cause.replace(/_/g, ' ')} · {e.corridor}
+                          </span>
+                          <span className="font-mono text-xs text-[var(--color-muted)]">
+                            {e.hour}:00 · score {e.congestion_score} · {e.duration_hours}h
+                          </span>
+                        </div>
+                        {(e.address || e.junction) && (
+                          <p className="mt-1 text-xs text-[var(--color-subtle)]">
+                            {e.junction || e.address}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {result.deployment_timeline && result.deployment_timeline.length > 0 && (
+                <div className="card p-5">
+                  <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--color-fg)]">
+                    <Timer className="h-4 w-4 text-[var(--color-accent)]" />
+                    Deployment timeline (T-minus checklist)
+                  </h4>
+                  <ol className="relative space-y-0 border-l border-[var(--color-border)] pl-6">
+                    {result.deployment_timeline.map((step, i) => (
+                      <li key={`${step.label}-${i}`} className="relative pb-5 last:pb-0">
+                        <span className="absolute -left-[25px] top-1 h-3 w-3 rounded-full border-2 border-[var(--color-accent)] bg-[var(--color-bg)]" />
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-accent)]">
+                          {step.label} · {step.phase}
+                        </p>
+                        <p className="mt-0.5 text-sm text-[var(--color-muted)]">{step.action}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
               {result.score_drivers && result.score_drivers.length > 0 && (
                 <div className="card p-5">
                   <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--color-fg)]">
@@ -430,7 +621,13 @@ export default function EventPlanner() {
 
               {whatIfHour !== null && (
                 <div className="card p-5">
-                  <h4 className="mb-1 text-sm font-semibold text-[var(--color-fg)]">What-if: change event hour</h4>
+                  <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold text-[var(--color-fg)]">
+                    <Columns2 className="h-4 w-4 text-[var(--color-accent)]" />
+                    Side-by-side plan comparison
+                    {compareLoading && (
+                      <span className="text-xs font-normal text-[var(--color-subtle)]">Updating…</span>
+                    )}
+                  </h4>
                   <p className="mb-4 text-xs text-[var(--color-subtle)]">
                     Slide to compare impact at a different time — same location and event type.
                   </p>
@@ -442,25 +639,75 @@ export default function EventPlanner() {
                     onChange={(e) => setWhatIfHour(parseInt(e.target.value, 10))}
                     className="w-full accent-[var(--color-accent)]"
                   />
-                  <div className="mt-2 flex items-center justify-between text-xs text-[var(--color-muted)]">
-                    <span>Hour: <strong className="text-[var(--color-fg)]">{whatIfHour}:00</strong></span>
-                    {whatIfResult && whatIfHour !== parseInt(form.hour, 10) && (
-                      <span>
-                        Score {result.congestion_score} →{' '}
-                        <strong className={clsx(
-                          whatIfResult.congestion_score < result.congestion_score
-                            ? 'text-[var(--color-success)]'
-                            : whatIfResult.congestion_score > result.congestion_score
-                              ? 'text-[var(--color-danger)]'
-                              : 'text-[var(--color-fg)]',
-                        )}>
-                          {whatIfResult.congestion_score}
-                        </strong>
-                        {' · '}
-                        Officers {result.recommendations.manpower.total_officers} → {whatIfResult.recommendations.manpower.total_officers}
-                      </span>
-                    )}
+                  <div className="mt-2 text-xs text-[var(--color-muted)]">
+                    Alternative hour: <strong className="text-[var(--color-fg)]">{whatIfHour}:00</strong>
+                    {' · '}
+                    Base hour: <strong className="text-[var(--color-fg)]">{form.hour}:00</strong>
                   </div>
+
+                  {result.plan_comparison && whatIfHour !== parseInt(form.hour, 10) ? (
+                    <div className="mt-5 overflow-x-auto">
+                      <table className="w-full min-w-[480px] text-sm">
+                        <thead>
+                          <tr className="border-b border-[var(--color-border)] text-left text-xs uppercase tracking-wide text-[var(--color-subtle)]">
+                            <th className="pb-2 pr-4">Metric</th>
+                            <th className="pb-2 pr-4">{result.plan_comparison.base_hour}:00 (base)</th>
+                            <th className="pb-2 pr-4">{result.plan_comparison.alternative_hour}:00 (alt)</th>
+                            <th className="pb-2">Delta</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-[var(--color-muted)]">
+                          <tr className="border-b border-[var(--color-border)]">
+                            <td className="py-2.5 pr-4">Congestion score</td>
+                            <td className="py-2.5 pr-4 font-mono">{result.plan_comparison.base.congestion_score}</td>
+                            <td className="py-2.5 pr-4 font-mono">{result.plan_comparison.alternative.congestion_score}</td>
+                            <td className={clsx(
+                              'py-2.5 font-mono',
+                              result.plan_comparison.delta.congestion_score < 0
+                                ? 'text-[var(--color-success)]'
+                                : result.plan_comparison.delta.congestion_score > 0
+                                  ? 'text-[var(--color-danger)]'
+                                  : '',
+                            )}>
+                              {result.plan_comparison.delta.congestion_score > 0 ? '+' : ''}
+                              {result.plan_comparison.delta.congestion_score}
+                            </td>
+                          </tr>
+                          <tr className="border-b border-[var(--color-border)]">
+                            <td className="py-2.5 pr-4">Duration (h)</td>
+                            <td className="py-2.5 pr-4 font-mono">{result.plan_comparison.base.estimated_duration_hours}</td>
+                            <td className="py-2.5 pr-4 font-mono">{result.plan_comparison.alternative.estimated_duration_hours}</td>
+                            <td className="py-2.5 font-mono">{result.plan_comparison.delta.duration_hours > 0 ? '+' : ''}{result.plan_comparison.delta.duration_hours}</td>
+                          </tr>
+                          <tr className="border-b border-[var(--color-border)]">
+                            <td className="py-2.5 pr-4">Closure prob.</td>
+                            <td className="py-2.5 pr-4 font-mono">{(result.plan_comparison.base.closure_probability * 100).toFixed(0)}%</td>
+                            <td className="py-2.5 pr-4 font-mono">{(result.plan_comparison.alternative.closure_probability * 100).toFixed(0)}%</td>
+                            <td className="py-2.5 font-mono">{(result.plan_comparison.delta.closure_probability * 100).toFixed(0)}%</td>
+                          </tr>
+                          <tr className="border-b border-[var(--color-border)]">
+                            <td className="py-2.5 pr-4">Officers</td>
+                            <td className="py-2.5 pr-4 font-mono">{result.plan_comparison.base.officers}</td>
+                            <td className="py-2.5 pr-4 font-mono">{result.plan_comparison.alternative.officers}</td>
+                            <td className="py-2.5 font-mono">{result.plan_comparison.delta.officers > 0 ? '+' : ''}{result.plan_comparison.delta.officers}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2.5 pr-4">Peak overlap</td>
+                            <td className="py-2.5 pr-4">{result.plan_comparison.base.peak_overlap ? 'Yes' : 'No'}</td>
+                            <td className="py-2.5 pr-4">{result.plan_comparison.alternative.peak_overlap ? 'Yes' : 'No'}</td>
+                            <td className="py-2.5">—</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <p className="mt-4 rounded-xl bg-[var(--color-accent-muted)] p-3 text-sm text-[var(--color-muted)]">
+                        {result.plan_comparison.recommendation}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-xs text-[var(--color-subtle)]">
+                      Move the slider away from the base hour to see a side-by-side comparison.
+                    </p>
+                  )}
                 </div>
               )}
 

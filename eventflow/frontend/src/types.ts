@@ -103,6 +103,99 @@ export interface ForecastRequest {
   day_of_week: number
   month: number
   description?: string
+  compare_hour?: number
+}
+
+export interface ConflictRadar {
+  has_conflict: boolean
+  conflict_count: number
+  compound_risk_pct: number
+  corridor_overlaps: Array<{
+    id: string
+    cause: string
+    hour: number
+    congestion_score: number
+    duration_hours: number
+    requires_closure: boolean
+  }>
+  zone_stress_events: Array<{
+    corridor: string
+    cause: string
+    hour: number
+    congestion_score: number
+  }>
+  adjacent_corridor_alerts: Array<{
+    corridor: string
+    event_count: number
+    avg_score: number
+  }>
+  message: string
+}
+
+export interface SimilarEvent {
+  id: string
+  event_type: string
+  cause: string
+  corridor: string
+  hour: number
+  congestion_score: number
+  duration_hours: number
+  requires_closure: boolean
+  address: string
+  junction: string | null
+}
+
+export interface DeploymentTimelineItem {
+  offset_minutes: number
+  label: string
+  phase: string
+  action: string
+}
+
+export interface CitizenImpact {
+  estimated_vehicles_affected: number
+  avg_delay_minutes: number
+  total_delay_vehicle_hours: number
+  impact_radius_km: number
+  peak_hour_multiplier: number
+  summary: string
+}
+
+export interface WeatherRisk {
+  applied: boolean
+  is_raining: boolean
+  precipitation_mm: number
+  score_adjustment: number
+  message: string | null
+  condition: string
+}
+
+export interface PlanComparison {
+  base_hour: number
+  alternative_hour: number
+  base: {
+    hour: number
+    congestion_score: number
+    estimated_duration_hours: number
+    closure_probability: number
+    officers: number
+    peak_overlap: boolean
+  }
+  alternative: {
+    hour: number
+    congestion_score: number
+    estimated_duration_hours: number
+    closure_probability: number
+    officers: number
+    peak_overlap: boolean
+  }
+  delta: {
+    congestion_score: number
+    duration_hours: number
+    closure_probability: number
+    officers: number
+  }
+  recommendation: string
 }
 
 export interface ForecastResult {
@@ -115,6 +208,13 @@ export interface ForecastResult {
   peak_hour_warning?: { peak_hour_overlap: boolean; message: string | null }
   calibration_applied?: boolean
   score_drivers?: Array<{ feature: string; value: string; contribution: string }>
+  conflict_radar?: ConflictRadar
+  similar_events?: SimilarEvent[]
+  deployment_timeline?: DeploymentTimelineItem[]
+  citizen_impact?: CitizenImpact
+  weather?: WeatherRisk
+  plan_comparison?: PlanComparison
+  alternative_plan?: ForecastResult
   recommendations: {
     manpower: {
       total_officers: number

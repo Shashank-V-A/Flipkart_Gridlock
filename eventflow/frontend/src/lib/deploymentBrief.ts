@@ -109,6 +109,64 @@ export function buildDeploymentBrief(
     })
   }
 
+  if (result.weather?.message) {
+    lines.push('', 'WEATHER RISK')
+    lines.push(`  Condition: ${result.weather.condition}`)
+    lines.push(`  Precipitation: ${result.weather.precipitation_mm} mm`)
+    lines.push(`  ${result.weather.message}`)
+  }
+
+  if (result.conflict_radar) {
+    const cr = result.conflict_radar
+    lines.push('', 'MULTI-EVENT CONFLICT RADAR')
+    lines.push(`  ${cr.message}`)
+    lines.push(`  Compound risk: ${cr.compound_risk_pct}%`)
+    if (cr.corridor_overlaps.length) {
+      lines.push('  Corridor overlaps:')
+      cr.corridor_overlaps.slice(0, 5).forEach((e) => {
+        lines.push(`    • ${e.cause} @ ${e.hour}:00 — score ${e.congestion_score}`)
+      })
+    }
+    if (cr.adjacent_corridor_alerts.length) {
+      lines.push('  Adjacent corridor alerts:')
+      cr.adjacent_corridor_alerts.forEach((a) => {
+        lines.push(`    • ${a.corridor}: ${a.event_count} events, avg ${a.avg_score}`)
+      })
+    }
+  }
+
+  if (result.similar_events?.length) {
+    lines.push('', 'SIMILAR PAST EVENTS')
+    result.similar_events.forEach((e) => {
+      lines.push(
+        `  • ${e.cause} on ${e.corridor} @ ${e.hour}:00 — score ${e.congestion_score}, ${e.duration_hours}h`,
+      )
+    })
+  }
+
+  if (result.citizen_impact) {
+    const ci = result.citizen_impact
+    lines.push('', 'CITIZEN IMPACT ESTIMATE')
+    lines.push(`  ${ci.summary}`)
+    lines.push(`  Total delay vehicle-hours: ${ci.total_delay_vehicle_hours}`)
+  }
+
+  if (result.deployment_timeline?.length) {
+    lines.push('', 'DEPLOYMENT TIMELINE (T-MINUS)')
+    result.deployment_timeline.forEach((t) => {
+      lines.push(`  ${t.label} [${t.phase}] — ${t.action}`)
+    })
+  }
+
+  if (result.plan_comparison) {
+    const pc = result.plan_comparison
+    lines.push('', 'PLAN COMPARISON')
+    lines.push(`  Base ${pc.base_hour}:00 vs Alt ${pc.alternative_hour}:00`)
+    lines.push(`  Score: ${pc.base.congestion_score} → ${pc.alternative.congestion_score} (Δ ${pc.delta.congestion_score})`)
+    lines.push(`  Officers: ${pc.base.officers} → ${pc.alternative.officers}`)
+    lines.push(`  ${pc.recommendation}`)
+  }
+
   lines.push(
     '',
     'MANPOWER',

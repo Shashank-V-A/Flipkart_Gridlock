@@ -7,6 +7,7 @@ from .schemas import AuthResponse, ChatRequest, FeedbackRequest, ForecastRequest
 from .services.analytics import AnalyticsService
 from .services.auth_service import create_access_token, verify_google_token
 from .services.chat_agent import ChatAgent
+from .services.forecast_insights import build_plan_comparison, enrich_forecast
 from .services.predictor import PredictorService
 
 app = FastAPI(
@@ -139,7 +140,21 @@ def planned_events():
 def forecast(request: ForecastRequest):
     if not predictor.is_ready():
         raise HTTPException(status_code=503, detail="ML models not trained. Run: python -m app.ml.trainer")
-    return predictor.forecast(request.model_dump())
+    payload = request.model_dump(exclude={"compare_hour"})
+    compare_hour = request.compare_hour
+    result = predictor.forecast(payload)
+    result = enrich_forecast(result, payload, analytics.df, compare_hour)
+
+    if compare_hour is not None and compare_hour != payload.get("hour"):
+        alt_payload = {**payload, "hour": compare_hour}
+        alt_result = predictor.forecast(alt_payload)
+        alt_result = enrich_forecast(alt_result, alt_payload, analytics.df)
+        result["plan_comparison"] = build_plan_comparison(
+            result, alt_result, int(payload["hour"]), compare_hour
+        )
+        result["alternative_plan"] = alt_result
+
+    return result
 
 
 @app.post("/api/feedback")

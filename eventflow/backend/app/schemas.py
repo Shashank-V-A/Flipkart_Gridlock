@@ -13,6 +13,7 @@ class ForecastRequest(BaseModel):
     day_of_week: int = Field(default=2, ge=0, le=6)
     month: int = Field(default=3, ge=1, le=12)
     description: str | None = None
+    compare_hour: int | None = Field(default=None, ge=0, le=23)
 
 
 class FeedbackRequest(BaseModel):
